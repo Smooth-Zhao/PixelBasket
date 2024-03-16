@@ -19,9 +19,9 @@
     },
     "windows": [
       {
-        "title": "pixel-basket",
-        "width": 800,
-        "height": 600
+        "title": "像素篮子",
+        "width": 1280,
+        "height": 800
       }
     ],
     "security": {
