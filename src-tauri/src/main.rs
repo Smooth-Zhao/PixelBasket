@@ -1,14 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-
 use std::env;
 use std::path::Path;
 use std::time::Instant;
 use dotenv::dotenv;
 use pixel_basket::file;
-use pixel_basket::db;
-
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -26,7 +23,6 @@ fn get_directory_tree(path:&str) -> String {
 
 fn main() {
     dotenv().ok();
-
     // 现在你可以使用 env::var() 来读取环境变量
     let port: String = env::var("DATABASE_URL").expect("PORT environment variable is not set");
     println!("Listening on port: {}", port);

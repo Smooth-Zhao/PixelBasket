@@ -1,20 +1,16 @@
-use sqlx_sqlite::SqlitePoolOptions;
-
+use std::env;
+use std::error::Error;
+use sqlx::{migrate::MigrateDatabase,Sqlite};
 pub async fn query_from_sqlite() -> Result<(), Box<dyn Error>> {
-    // 设置连接选项并创建数据库连接池
-    let pool = SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect("sqlite:./test.db")
-        .await?;
-
-    // 执行查询
-    let row = sqlx::query!("SELECT * FROM your_table")
-        .fetch_one(&pool)
-        .await?;
-
-    // 处理查询结果
-    let column_value: String = row.column_name;
-    println!("Column value: {}", column_value);
-
+    let db_url = env::var("DATABASE_URL").expect("PORT environment variable is not set");
+    if !Sqlite::database_exists(db_url.as_str()).await.unwrap_or(false) {
+        println!("Creating database {}", db_url);
+        match Sqlite::create_database(db_url.as_str()).await {
+            Ok(_) => println!("Create db success"),
+            Err(error) => panic!("error: {}", error),
+        }
+    } else {
+        println!("Database already exists");
+    }
     Ok(())
 }
