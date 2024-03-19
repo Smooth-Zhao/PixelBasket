@@ -1,15 +1,15 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use dotenv::dotenv;
+use pixel_basket::file;
 use std::env;
 use std::path::Path;
 use std::time::Instant;
-use dotenv::dotenv;
-use pixel_basket::file;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
-fn get_directory_tree(path:&str) -> String {
+fn get_directory_tree(path: &str) -> String {
     let start = Instant::now(); // 获取当前时间
     let path = Path::new(path);
     let result = file::get_directory_tree(&path);
