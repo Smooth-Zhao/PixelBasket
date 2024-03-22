@@ -7,10 +7,16 @@
 //     console.log(JSON.parse(res as string))
 // });
 import Layout from "./components/Layout.vue";
+import {NMessageProvider,NConfigProvider} from "naive-ui";
+import {darkTheme} from 'naive-ui'
 </script>
 
 <template>
-  <Layout/>
+  <n-config-provider :theme="darkTheme">
+    <n-message-provider>
+      <Layout/>
+    </n-message-provider>
+  </n-config-provider>
 </template>
 
 <style scoped>

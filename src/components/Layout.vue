@@ -1,6 +1,7 @@
 <script setup lang="ts">
-
-import Category from "./Category.vue";
+import Category from "./Category/index.vue";
+import useMainContextMenu from "./ContextMenu/hooks/useMainContextMenu.ts";
+const { trigger } = useMainContextMenu()
 </script>
 
 <template>
@@ -8,7 +9,7 @@ import Category from "./Category.vue";
     <div class="layout-left">
       <category/>
     </div>
-    <div class="layout-center"></div>
+    <div class="layout-center" @contextmenu="trigger"></div>
     <div class="layout-right"></div>
   </div>
 </template>
