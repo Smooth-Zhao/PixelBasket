@@ -1,5 +1,6 @@
 import {ref, render, h} from "vue";
 import ContextMenu from "./index.vue"
+import {isFunction} from "../../utils";
 
 export interface IContextMenuItem {
   key: string
@@ -20,8 +21,14 @@ export const activeContextMenuData = ref<{
     y: number
   }
 }>()
-const createContextMenu = (option: ICreateContextMenuOption) => {
+const createContextMenu = (param: ICreateContextMenuOption | (() => ICreateContextMenuOption)) => {
   render(h(ContextMenu), document.body)
+  let option:ICreateContextMenuOption;
+  if (isFunction(param)){
+    option = param()
+  }else{
+    option = param
+  }
 
   const trigger = (e: MouseEvent) => {
     e.stopPropagation()
@@ -34,8 +41,8 @@ const createContextMenu = (option: ICreateContextMenuOption) => {
       }
     }
   }
-  return () => ({
+  return {
     trigger
-  })
+  }
 }
 export default createContextMenu

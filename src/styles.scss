@@ -39,11 +39,9 @@ html, body {
 #app {
   background: url("./assets/hero-1.jpg") no-repeat;
   background-size: 100% 100%;
-  margin: 16px;
   overflow: hidden;
-  height: calc(100% - 32px);
+  height: 100%;
   border-radius: 4px;
-  box-shadow: 0 0 16px rgba(0, 0, 0, .8);
 }
 
 .n-config-provider {
