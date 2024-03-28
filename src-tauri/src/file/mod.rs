@@ -1,3 +1,5 @@
+pub mod scan;
+
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
