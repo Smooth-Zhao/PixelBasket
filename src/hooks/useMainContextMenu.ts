@@ -1,10 +1,10 @@
-import createContextMenu from "../createContextMenu.ts";
+import createContextMenu from "../components/ContextMenu/createContextMenu.ts";
 import {useModal} from "naive-ui"
 import {h, ref, watch} from "vue"
 import {ModalApiInjection} from "naive-ui/es/modal/src/ModalProvider";
 import BasketEditor from "../components/BasketEditor.vue";
-import Basket from "../entities/Basket.ts"
 import {invoke} from "@tauri-apps/api";
+import Basket from "../entities/Basket.ts";
 const useMainContextMenu = () => {
   const modal = useModal()
   return createContextMenu({
@@ -70,6 +70,6 @@ const onCreateBasket = (modal: ModalApiInjection): void => {
     }),
     preset: 'dialog'
   })
-  watch(basket, () => console.log(basket),{deep:true})
+  // watch(basket, () => console.log(basket),{deep:true})
 }
 export default useMainContextMenu;

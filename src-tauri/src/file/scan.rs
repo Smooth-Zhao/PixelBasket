@@ -72,7 +72,7 @@ impl ScanJob {
         if as_interval {
             if let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) {
                 let now = duration.as_millis();
-                if self.send_time == 0 || now - self.send_time > 100 {
+                if self.send_time == 0 || now - self.send_time > 41 {
                     let _ = self.app_handle.emit_all("app", self.count);
                     self.send_time = now;
                 }
