@@ -15,7 +15,7 @@ const handleDragWindow = (e: MouseEvent) => {
 
 <style scoped lang="scss">
 .content-header {
-  height: 40px;
+  flex: 0 0 40px;
   transition: height .2s ease;
   overflow: hidden;
   border-bottom: solid 1px var(--color-dark-3);

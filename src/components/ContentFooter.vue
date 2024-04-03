@@ -17,7 +17,7 @@ onMounted(()=>{
 
 <style scoped lang="scss">
 .content-footer {
-  height: 40px;
+  flex: 0 0 40px;
   transition: height .2s ease;
   overflow: hidden;
   border-top: solid 1px var(--color-dark-3);

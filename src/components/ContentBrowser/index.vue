@@ -5,16 +5,20 @@ import {open} from "@tauri-apps/api/dialog";
 import {convertFileSrc} from "@tauri-apps/api/tauri";
 import FileItem from "./components/FileItem.vue";
 import useSelection from "../../hooks/useSelection.ts";
+import {invoke} from "@tauri-apps/api";
 
 const columnNumber = ref(4)
 const images = ref<string[]>([])
 const {items: selectItems} = useSelection()
 
 const handleTest = async () => {
-  const result = await open({
-    multiple: true
-  }) as string[]
-  result.forEach(filePath => {
+  images.value = []
+  const path = await open({
+    directory: true
+  }) as string
+  const result = await invoke("get_directory_files",{path}) as string
+
+  (JSON.parse(result) as string[]).forEach(filePath => {
     const url = convertFileSrc(filePath)
     images.value.push(url)
   })
@@ -102,7 +106,6 @@ onUnmounted(() => {
         v-for="item in images"
         :src="item"
         :class="{ 'selected': selectItems.has(item) }"
-        @contextmenu.stop.prevent
         @click.stop="handleSelect($event,item)"
       />
     </div>
@@ -118,6 +121,5 @@ onUnmounted(() => {
   align-content: flex-start;
   transition: all .2s ease;
   padding: 16px;
-
 }
 </style>
