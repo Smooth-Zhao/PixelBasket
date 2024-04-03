@@ -6,10 +6,15 @@ use tauri::{AppHandle, Manager};
 
 use crate::file::Directory;
 
+pub trait Scanner {
+    fn scan(&self, path: &Path) -> bool;
+}
+
 pub struct ScanJob {
     app_handle: AppHandle,
     count: i32,
     send_time: u128,
+    scanners: Vec<Box<dyn Scanner>>,
 }
 
 impl ScanJob {
@@ -18,7 +23,12 @@ impl ScanJob {
             app_handle,
             count: 0,
             send_time: 0,
+            scanners: Vec::new(),
         }
+    }
+
+    pub fn add_scanner(&mut self, scanner: Box<dyn Scanner>) {
+        self.scanners.push(scanner);
     }
 
     pub fn get_directory_tree(&mut self, dir: &Path) -> String {
@@ -57,8 +67,18 @@ impl ScanJob {
                     // 如果是文件，打印路径
                     // println!("【Dir】{}", path.display());
                 } else {
-                    self.count += 1;
-                    self.send_count(true)
+                    let path = path.as_path();
+                    if self
+                        .scanners
+                        .iter()
+                        .map(|v| v.scan(path))
+                        .collect::<Vec<bool>>()
+                        .iter()
+                        .any(|v| *v)
+                    {
+                        self.count += 1;
+                        self.send_count(true)
+                    }
                     // 如果是文件，打印路径
                     // println!("【File】{}", path.display());
                 }
