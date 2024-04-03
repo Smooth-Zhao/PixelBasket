@@ -59,28 +59,23 @@ impl ScanJob {
             };
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.is_dir() {
-                    match self.walk(&path) {
+                let path = path.as_path();
+                if path.is_dir() && !is_hidden(path) {
+                    match self.walk(path) {
                         Ok(directories) => directory.children = directories,
                         Err(e) => println!("Error reading directories: {}", e),
                     }
-                    // 如果是文件，打印路径
-                    // println!("【Dir】{}", path.display());
-                } else {
-                    let path = path.as_path();
-                    if self
+                } else if path.is_file()
+                    && self
                         .scanners
                         .iter()
                         .map(|v| v.scan(path))
                         .collect::<Vec<bool>>()
                         .iter()
                         .any(|v| *v)
-                    {
-                        self.count += 1;
-                        self.send_count(true)
-                    }
-                    // 如果是文件，打印路径
-                    // println!("【File】{}", path.display());
+                {
+                    self.count += 1;
+                    self.send_count(true)
                 }
             }
             directories.push(directory);
@@ -101,4 +96,15 @@ impl ScanJob {
             let _ = self.app_handle.emit_all("app", self.count);
         }
     }
+}
+
+pub fn is_hidden(path: &Path) -> bool {
+    if let Some(file_name) = path.file_name() {
+        if let Some(file_name) = file_name.to_str() {
+            if file_name.starts_with('.') {
+                return true;
+            }
+        }
+    }
+    false
 }
