@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {Menu} from "@vicons/ionicons5";
 import {NIcon} from "naive-ui";
-import useMainContextMenu from "../../../ContextMenu/hooks/useMainContextMenu.ts";
+import useMainContextMenu from "../../../../hooks/useMainContextMenu.ts";
 
 const { trigger } = useMainContextMenu()
 

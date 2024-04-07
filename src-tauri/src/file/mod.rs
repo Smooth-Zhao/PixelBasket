@@ -19,10 +19,11 @@ pub struct Directory {
 pub fn get_directory_tree(dir: &Path) -> String {
     let start = Instant::now(); // 获取当前时间
     let mut count = 0;
+    let mut files = vec![];
 
-    match walk(dir, &mut count) {
+    match walk(dir, &mut count, &mut files) {
         Ok(directories) => {
-            let json = serde_json::to_string(&directories).unwrap();
+            // let json = serde_json::to_string(&directories).unwrap();
             let end = Instant::now(); // 获取当前时间
             let duration = end - start; // 计算运行时间
             println!(
@@ -34,11 +35,12 @@ pub fn get_directory_tree(dir: &Path) -> String {
         }
         _ => {}
     };
-    return String::new();
+    
+    return serde_json::to_string(&files).unwrap();
 }
 
 pub static APP_HANDLE: Lazy<Mutex<Option<AppHandle>>> = Lazy::new(|| Mutex::new(None));
-fn walk(dir: &Path, count: &mut i32) -> io::Result<Vec<Directory>> {
+fn walk(dir: &Path, count: &mut i32, files: &mut Vec<String>) -> io::Result<Vec<Directory>> {
     let mut directories = Vec::new();
 
     if let Ok(entries) = fs::read_dir(dir) {
@@ -51,7 +53,7 @@ fn walk(dir: &Path, count: &mut i32) -> io::Result<Vec<Directory>> {
             if let Ok(entry) = entry {
                 let path = entry.path();
                 if path.is_dir() {
-                    match walk(&path, count) {
+                    match walk(&path, count,files) {
                         Ok(directories) => directory.children = directories,
                         Err(e) => println!("Error reading directories: {}", e),
                     }
@@ -59,6 +61,9 @@ fn walk(dir: &Path, count: &mut i32) -> io::Result<Vec<Directory>> {
                     // println!("【Dir】{}", path.display());
                 } else {
                     *count += 1;
+                    // 将path添加到files中
+                    files.push(path.to_string_lossy().into_owned());
+                    
                     // if let Ok(mut app) = APP_HANDLE.lock() {
                     //     let option = app.as_mut();
                     //     if let Some(handle) = option{

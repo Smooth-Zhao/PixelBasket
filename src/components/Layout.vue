@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import Category from "./Category/index.vue";
-import useMainContextMenu from "./ContextMenu/hooks/useMainContextMenu.ts";
+import ContentBrowser from "./ContentBrowser/index.vue";
+import ContentFooter from "./ContentFooter.vue";
+import ContentHeader from "./ContentHeader.vue";
+import useMainContextMenu from "../hooks/useMainContextMenu.ts";
+import FileAttribute from "./FileAttribute.vue";
 const { trigger } = useMainContextMenu()
 </script>
 
@@ -9,8 +13,14 @@ const { trigger } = useMainContextMenu()
     <div class="layout-left">
       <category/>
     </div>
-    <div class="layout-center" @contextmenu="trigger"></div>
-    <div class="layout-right"></div>
+    <div class="layout-center" @contextmenu="trigger">
+      <content-header/>
+      <content-browser/>
+      <content-footer/>
+    </div>
+    <div class="layout-right">
+      <file-attribute/>
+    </div>
   </div>
 </template>
 <style scoped lang="scss">
@@ -29,6 +39,8 @@ const { trigger } = useMainContextMenu()
     width: 0;
     flex: 1 1 auto;
     background-color: var(--color-dark-1);
+    display: flex;
+    flex-direction: column;
   }
 
   .layout-right {
