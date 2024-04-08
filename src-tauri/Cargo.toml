@@ -21,6 +21,7 @@ once_cell = {version = "1"}
 time = "0.3.34"
 image = "0.25.1"
 chrono = "0.4.37"
+base64 = "0.22.0"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
