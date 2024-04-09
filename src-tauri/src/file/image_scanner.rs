@@ -2,13 +2,13 @@ use std::error::Error;
 use std::io::Cursor;
 use std::path::Path;
 
-use base64::{Engine as _, engine::general_purpose};
+use base64::{engine::general_purpose, Engine as _};
 use chrono::offset::Utc;
-use image::{DynamicImage, GenericImageView, ImageFormat};
 use image::imageops::FilterType;
-use kmeans_colors::{Calculate, CentroidData, get_kmeans_hamerly, Sort};
-use palette::{FromColor, IntoColor, Srgb, Srgba};
+use image::{DynamicImage, GenericImageView, ImageFormat};
+use kmeans_colors::{get_kmeans_hamerly, Calculate, CentroidData, Sort};
 use palette::cast::ComponentsAs;
+use palette::{FromColor, IntoColor, Srgb, Srgba};
 use sqlx::query;
 
 use crate::db::sqlite::Session;
@@ -51,26 +51,31 @@ fn analyze_image_metadata(
     let dimensions = image.dimensions();
     image_metadata.image_width = dimensions.0;
     image_metadata.image_height = dimensions.1;
-    if let Some(base64) = resize_to_base64(
+    let resize_image = resize(
         &image,
         image_metadata.image_width,
         image_metadata.image_height,
-    ) {
+    );
+    if let Some(base64) = image_to_base64(&resize_image) {
         image_metadata.thumbnail = base64;
     }
-    image_metadata.colors = kmeans(&image);
+    image_metadata.colors = kmeans(&resize_image);
     image_metadata.shape =
         calculated_shape(image_metadata.image_width, image_metadata.image_height);
     Ok(())
 }
 
-/// 生成base64图片缩咯图
-fn resize_to_base64(image: &DynamicImage, w: u32, h: u32) -> Option<String> {
+/// 生成图片缩咯图
+fn resize(image: &DynamicImage, w: u32, h: u32) -> DynamicImage {
     let w1 = 200;
     let h1 = (200f32 / w as f32 * h as f32) as u32;
-    let small = image.resize(w1, h1, FilterType::Triangle);
+    image.resize(w1, h1, FilterType::Triangle)
+}
+
+/// 生成base64图片
+fn image_to_base64(image: &DynamicImage) -> Option<String> {
     let mut buffer = Vec::new();
-    if small
+    if image
         .write_to(&mut Cursor::new(&mut buffer), ImageFormat::Jpeg)
         .is_ok()
     {

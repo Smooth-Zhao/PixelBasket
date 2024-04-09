@@ -70,7 +70,7 @@ impl ScanJob {
                     && self
                         .scanners
                         .iter()
-                        .map(|v| v.scan(path).is_ok_and(|x| x))
+                        .map(|v| v.scan(path).is_ok_and(|v| v))
                         .collect::<Vec<bool>>()
                         .iter()
                         .any(|v| *v)
