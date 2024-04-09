@@ -1,14 +1,15 @@
-pub mod scan;
+use std::{fs, io};
+use std::path::Path;
+use std::sync::Mutex;
+use std::time::Instant;
 
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
-use std::sync::mpsc;
-use std::sync::mpsc::{RecvError, Sender};
-use std::sync::Mutex;
-use std::time::Instant;
-use std::{fs, io, time};
 use tauri::{AppHandle, Manager};
+
+pub mod scan;
+pub mod image_scanner;
+pub mod metadata;
 
 #[derive(Serialize, Deserialize)]
 pub struct Directory {
