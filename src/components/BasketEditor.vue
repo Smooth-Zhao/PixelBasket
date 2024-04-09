@@ -10,7 +10,9 @@ const basket = defineModel<Basket>("basket", {
   default: new Basket()
 })
 listen("app",(e)=>{
-  value.value= e.payload
+  if (typeof e.payload === "string") {
+    value.value = e.payload
+  }
 })
 const handleAddFolder = async () => {
   const result = await open({
