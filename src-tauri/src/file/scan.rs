@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::path::Path;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use std::{fs, io};
@@ -7,7 +8,7 @@ use tauri::{AppHandle, Manager};
 use crate::file::Directory;
 
 pub trait Scanner {
-    fn scan(&self, path: &Path) -> bool;
+    fn scan(&self, path: &Path) -> Result<bool, Box<dyn Error>>;
 }
 
 pub struct ScanJob {
@@ -69,7 +70,7 @@ impl ScanJob {
                     && self
                         .scanners
                         .iter()
-                        .map(|v| v.scan(path))
+                        .map(|v| v.scan(path).is_ok_and(|x| x))
                         .collect::<Vec<bool>>()
                         .iter()
                         .any(|v| *v)

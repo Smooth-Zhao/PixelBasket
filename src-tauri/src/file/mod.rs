@@ -9,6 +9,7 @@ use tauri::{AppHandle, Manager};
 
 pub mod scan;
 pub mod image_scanner;
+pub mod metadata;
 
 #[derive(Serialize, Deserialize)]
 pub struct Directory {

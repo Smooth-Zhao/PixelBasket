@@ -8,9 +8,8 @@ pub struct Session {
 }
 
 impl Session {
-    
     /// 使用url创建数据库会话
-    /// 
+    ///
     /// ```rust,no_run
     /// # use pixel_basket::db::sqlite::Session;
     /// # async fn example() {
@@ -32,7 +31,7 @@ impl Session {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
     /// session.connect().await;
-    /// 
+    ///
     /// if let Ok(pool) = session.get_pool() {
     ///     // 使用pool
     /// }
@@ -46,7 +45,7 @@ impl Session {
     }
 
     /// 建立连接
-    /// 
+    ///
     /// ```rust,no_run
     /// # use pixel_basket::db::sqlite::Session;
     /// # async fn example() {
@@ -69,7 +68,7 @@ impl Session {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
     /// session.connect().await;
-    /// 
+    ///
     /// session.execute("SELECT * FROM example").await.expect("");
     /// # }
     /// ```
@@ -84,13 +83,13 @@ impl Session {
     ///
     /// ```rust,no_run
     /// use sqlx::sqlite::SqliteRow;
-    /// 
+    ///
     /// # use pixel_basket::db::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
     /// session.connect().await;
-    /// 
+    ///
     /// let result: Vec<SqliteRow> = session.select("SELECT * FROM example").await.expect("");
     /// # }
     pub async fn select(&self, sql: &str) -> Result<Vec<SqliteRow>, sqlx::Error> {
@@ -104,7 +103,7 @@ impl Session {
     ///
     /// ```rust,no_run
     /// use sqlx::sqlite::SqliteRow;   
-    /// 
+    ///
     /// #[derive(sqlx::FromRow)]
     /// struct User {
     ///    // ...
@@ -124,6 +123,26 @@ impl Session {
     ) -> Result<Vec<T>, sqlx::Error> {
         if let Some(pool) = &self.pool {
             return query_as::<_, T>(sql).fetch_all(pool).await;
+        }
+        Err(sqlx::Error::PoolClosed)
+    }
+
+    /// 查询条数
+    ///
+    /// ```rust,no_run
+    /// use sqlx::sqlite::SqliteRow;
+    ///
+    /// # use pixel_basket::db::sqlite::{Count, Session};
+    /// # async fn example() {
+    /// let mut session = Session::new("test.db");
+    /// // 先建立连接
+    /// session.connect().await;
+    ///
+    /// let result: Count = session.count("SELECT COUNT(*) AS count FROM example").await.expect("");
+    /// # }
+    pub async fn count(&self, sql: &str) -> Result<Count, sqlx::Error> {
+        if let Some(pool) = &self.pool {
+            return query_as::<_, Count>(sql).fetch_one(pool).await;
         }
         Err(sqlx::Error::PoolClosed)
     }
@@ -202,4 +221,9 @@ mod tests {
             .expect("err");
         println!("users:{:?}", result);
     }
+}
+
+#[derive(Debug, sqlx::FromRow)]
+pub struct Count {
+    pub count: i64,
 }

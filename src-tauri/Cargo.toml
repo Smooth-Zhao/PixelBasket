@@ -22,6 +22,11 @@ time = "0.3.34"
 image = "0.25.1"
 chrono = "0.4.37"
 base64 = "0.22.0"
+kmeans_colors = "0.6.0"
+palette = "0.7.5"
+snowflaked = { version = "1.0.3", features = ["sync"] }
+file-hashing = "0.1.2"
+sha1 = "0.10.6"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
