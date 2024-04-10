@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::io::Cursor;
 use std::path::Path;
 
@@ -15,6 +14,7 @@ use crate::db::sqlite::Session;
 use crate::db::utils::id;
 use crate::file::metadata::{ImageMetadata, Metadata};
 use crate::file::scan::Scanner;
+use crate::Result;
 
 pub struct ImageScanner {}
 
@@ -25,28 +25,29 @@ impl ImageScanner {
 }
 
 impl Scanner for ImageScanner {
-    fn scan(&self, path: &Path) -> Result<bool, Box<dyn Error>> {
-        let mut metadata = Metadata::load(path);
-        match metadata.file_suffix.as_str() {
+    fn is_support(&self, suffix: &str) -> bool {
+        match suffix {
             "avif" | "bmp" | "dds" | "farbfeld" | "gif" | "hdr" | "ico" | "jpg" | "jpeg"
-            | "exr" | "png" | "pnm" | "qoi" | "tga" | "tiff" | "webp" => {
-                metadata.analyze_metadata(path)?;
-                let mut image_metadata = ImageMetadata::new(metadata);
-                analyze_image_metadata(path, &mut image_metadata)?;
-                save_to_db(image_metadata);
-                return Ok(true);
-            }
-            _ => {}
+            | "exr" | "png" | "pnm" | "qoi" | "tga" | "tiff" | "webp" => true,
+            _ => false,
+        }
+    }
+
+    fn scan(&self, path: &Path) -> Result<bool> {
+        let mut metadata = Metadata::load(path);
+        if self.is_support(metadata.file_suffix.as_str()) {
+            metadata.analyze_metadata(path)?;
+            let mut image_metadata = ImageMetadata::new(metadata);
+            analyze_image_metadata(path, &mut image_metadata)?;
+            save_to_db(image_metadata);
+            return Ok(true);
         }
         Ok(false)
     }
 }
 
 /// 解析图片元数据
-fn analyze_image_metadata(
-    path: &Path,
-    image_metadata: &mut ImageMetadata,
-) -> Result<(), Box<dyn Error>> {
+fn analyze_image_metadata(path: &Path, image_metadata: &mut ImageMetadata) -> Result<()> {
     let image = image::open(path)?;
     let dimensions = image.dimensions();
     image_metadata.image_width = dimensions.0;

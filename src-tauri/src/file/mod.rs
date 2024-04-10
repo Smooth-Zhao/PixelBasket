@@ -1,15 +1,16 @@
-use std::{fs, io};
 use std::path::Path;
 use std::sync::Mutex;
 use std::time::Instant;
+use std::{fs, io};
 
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
-pub mod scan;
 pub mod image_scanner;
 pub mod metadata;
+pub mod model_scanner;
+pub mod scan;
 
 #[derive(Serialize, Deserialize)]
 pub struct Directory {
@@ -23,7 +24,7 @@ pub fn get_directory_tree(dir: &Path) -> String {
     let mut files = vec![];
 
     match walk(dir, &mut count, &mut files) {
-        Ok(directories) => {
+        Ok(_) => {
             // let json = serde_json::to_string(&directories).unwrap();
             let end = Instant::now(); // 获取当前时间
             let duration = end - start; // 计算运行时间
@@ -36,7 +37,7 @@ pub fn get_directory_tree(dir: &Path) -> String {
         }
         _ => {}
     };
-    
+
     return serde_json::to_string(&files).unwrap();
 }
 
@@ -54,7 +55,7 @@ fn walk(dir: &Path, count: &mut i32, files: &mut Vec<String>) -> io::Result<Vec<
             if let Ok(entry) = entry {
                 let path = entry.path();
                 if path.is_dir() {
-                    match walk(&path, count,files) {
+                    match walk(&path, count, files) {
                         Ok(directories) => directory.children = directories,
                         Err(e) => println!("Error reading directories: {}", e),
                     }
@@ -64,7 +65,7 @@ fn walk(dir: &Path, count: &mut i32, files: &mut Vec<String>) -> io::Result<Vec<
                     *count += 1;
                     // 将path添加到files中
                     files.push(path.to_string_lossy().into_owned());
-                    
+
                     // if let Ok(mut app) = APP_HANDLE.lock() {
                     //     let option = app.as_mut();
                     //     if let Some(handle) = option{
