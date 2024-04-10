@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::io::Cursor;
 use std::path::Path;
+use std::time::Instant;
 
 use base64::{Engine as _, engine::general_purpose};
 use chrono::offset::Utc;
@@ -47,10 +48,13 @@ fn analyze_image_metadata(
     path: &Path,
     image_metadata: &mut ImageMetadata,
 ) -> Result<(), Box<dyn Error>> {
+    // 计算代码运行时间
+    let start = Instant::now();
     let image = image::open(path)?;
     let dimensions = image.dimensions();
     image_metadata.image_width = dimensions.0;
     image_metadata.image_height = dimensions.1;
+
     if let Some(base64) = resize_to_base64(
         &image,
         image_metadata.image_width,
@@ -58,9 +62,15 @@ fn analyze_image_metadata(
     ) {
         image_metadata.thumbnail = base64;
     }
-    image_metadata.colors = kmeans(&image);
-    image_metadata.shape =
-        calculated_shape(image_metadata.image_width, image_metadata.image_height);
+
+    // image_metadata.colors = kmeans(&image);
+
+    let end = Instant::now();
+    let duration = end - start;
+
+    println!("代码运行时间为: {:?}", duration);
+    // image_metadata.shape =
+    //     calculated_shape(image_metadata.image_width, image_metadata.image_height);
     Ok(())
 }
 
