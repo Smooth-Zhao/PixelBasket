@@ -5,11 +5,11 @@ use crate::Result;
 
 pub trait Scanner {
     fn is_support(&self, suffix: &str) -> bool;
-    fn scan(&self, path: &Path) -> Result<bool>;
+    fn scan(&self, path: &PathBuf) -> Result<()>;
 }
 
 pub struct ScanJob {
-    scanners: Vec<Box<dyn Scanner + Sync>>,
+    scanners: Vec<Box<dyn Scanner>>,
     pub file_list: Vec<PathBuf>,
     pub file_count: usize,
     pub scan_count: usize,
@@ -25,7 +25,7 @@ impl ScanJob {
         }
     }
 
-    pub fn add_scanner(&mut self, scanner: Box<dyn Scanner + Sync>) {
+    pub fn add_scanner(&mut self, scanner: Box<dyn Scanner>) {
         self.scanners.push(scanner);
     }
 
@@ -67,21 +67,14 @@ impl ScanJob {
         let start = Instant::now();
 
         for path in self.file_list.iter() {
-            if self
-                .scanners
-                .iter()
-                .map(|v| v.scan(path).is_ok_and(|v| v))
-                .collect::<Vec<bool>>()
-                .iter()
-                .any(|v| *v)
-            {
-                self.scan_count += 1;
-            };
+            for scanner in self.scanners.iter() {
+                let _ = scanner.scan(path);
+            }
         }
 
         println!(
             "扫描{}个文件,代码运行时间为{:?}秒",
-            self.scan_count,
+            self.file_count,
             (Instant::now() - start).as_secs()
         );
     }

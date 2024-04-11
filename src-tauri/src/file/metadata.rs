@@ -1,6 +1,6 @@
 use std::error::Error;
 use std::io::Error as IoError;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use chrono::{DateTime, Utc};
 use file_hashing::get_hash_file;
@@ -41,7 +41,7 @@ impl Metadata {
         }
     }
 
-    pub fn load(path: &Path) -> Self {
+    pub fn load(path: &PathBuf) -> Self {
         let mut metadata = Self::empty();
         if let Some(extension) = path.extension() {
             if let Some(file_suffix) = extension.to_str() {
@@ -52,7 +52,7 @@ impl Metadata {
     }
 
     /// 解析文件元数据
-    pub fn analyze_metadata(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
+    pub fn analyze_metadata(&mut self, path: &PathBuf) -> Result<(), Box<dyn Error>> {
         if let Some(file_path) = path.to_str() {
             self.file_path = file_path.to_string();
         }

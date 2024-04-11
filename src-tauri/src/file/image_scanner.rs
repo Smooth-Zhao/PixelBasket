@@ -1,5 +1,5 @@
 use std::io::Cursor;
-use std::path::Path;
+use std::path::PathBuf;
 
 use base64::{engine::general_purpose, Engine as _};
 use chrono::offset::Utc;
@@ -33,21 +33,27 @@ impl Scanner for ImageScanner {
         }
     }
 
-    fn scan(&self, path: &Path) -> Result<bool> {
+    fn scan(&self, path: &PathBuf) -> Result<()> {
         let mut metadata = Metadata::load(path);
+        let path = path.clone();
         if self.is_support(metadata.file_suffix.as_str()) {
-            metadata.analyze_metadata(path)?;
-            let mut image_metadata = ImageMetadata::new(metadata);
-            analyze_image_metadata(path, &mut image_metadata)?;
-            save_to_db(image_metadata);
-            return Ok(true);
+            tokio::spawn(async move {
+                if metadata.analyze_metadata(&path).is_ok() {
+                    let mut image_metadata = ImageMetadata::new(metadata);
+                    if analyze_image_metadata(&path, &mut image_metadata).is_ok() {
+                        save_to_db(image_metadata);
+                        return true;
+                    };
+                };
+                false
+            });
         }
-        Ok(false)
+        Ok(())
     }
 }
 
 /// 解析图片元数据
-fn analyze_image_metadata(path: &Path, image_metadata: &mut ImageMetadata) -> Result<()> {
+fn analyze_image_metadata(path: &PathBuf, image_metadata: &mut ImageMetadata) -> Result<()> {
     let image = image::open(path)?;
     let dimensions = image.dimensions();
     image_metadata.image_width = dimensions.0;

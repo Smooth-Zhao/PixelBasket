@@ -1,5 +1,7 @@
-use std::path::Path;
+use std::path::PathBuf;
+
 use crate::file::scan::Scanner;
+use crate::Result;
 
 pub struct ModelScanner {}
 
@@ -13,11 +15,11 @@ impl Scanner for ModelScanner {
     fn is_support(&self, suffix: &str) -> bool {
         match suffix {
             "obj" | "fbx" => true,
-            _ => false
+            _ => false,
         }
     }
 
-    fn scan(&self, _path: &Path) -> crate::Result<bool> {
-        Ok(false)
+    fn scan(&self, _path: &PathBuf) -> Result<()> {
+        Ok(())
     }
 }

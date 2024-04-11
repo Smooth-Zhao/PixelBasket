@@ -14,13 +14,12 @@ pub struct Basket {
 
 #[tauri::command]
 pub fn create_basket(basket: Basket, _app_handle: tauri::AppHandle) -> &'static str {
-    for x in basket.directories.iter() {
-        let string = x.clone();
+    for dir in basket.directories {
         tokio::spawn(async move {
             let mut scan = ScanJob::new();
             scan.add_scanner(ImageScanner::wrap());
             scan.add_scanner(ModelScanner::wrap());
-            scan.load_dir(Path::new(string.as_str()));
+            scan.load_dir(Path::new(dir.as_str()));
             scan.run_scanner();
         });
     }
