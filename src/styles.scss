@@ -15,8 +15,8 @@
 
   --color-light-1: #f5f5f5;
 
-  color: #d7d7d7;
-  background: transparent;
+  color: var(--color-light-1);
+  background-color: var(--color-dark-1);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -37,8 +37,6 @@ html, body {
 }
 
 #app {
-  background: url("./assets/hero-1.jpg") no-repeat;
-  background-size: 100% 100%;
   overflow: hidden;
   height: 100%;
   border-radius: 4px;

@@ -2,7 +2,6 @@ import {ref} from "vue";
 import PBFile from "../entities/PBFile.ts";
 import {open} from "@tauri-apps/api/dialog";
 import {invoke} from "@tauri-apps/api";
-import {convertFileSrc} from "@tauri-apps/api/tauri";
 
 const files = ref<PBFile[]>([])
 
@@ -26,9 +25,8 @@ const readDirectory = async () => {
   const result = await invoke("get_directory_files",{path}) as string
 
   (JSON.parse(result) as string[]).forEach(filePath => {
-    const src = convertFileSrc(filePath)
     files.value.push({
-      src,
+      src:filePath,
       name:"xxx",
     })
   })

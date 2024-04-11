@@ -36,6 +36,7 @@ const handleFilterExpand = () => {
   transition: flex .2s ease;
   overflow: hidden;
   padding: 0 8px;
+  will-change: auto;
 
   .tauri-drag-region{
     height: 40px;

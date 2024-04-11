@@ -24,13 +24,13 @@ const handleSelect = (e: PointerEvent, src: string) => {
 const selectFile = (current: any, addition = false) => {
   if (addition) {
     const arr = Array.from(selectItems.value)
-    const firstIndex = files.value.indexOf(arr.at(0));
-    const currentIndex = files.value.indexOf(current);
+    const firstIndex = files.value.findIndex(v=>v.src === arr.at(0));
+    const currentIndex = files.value.findIndex(v=>v.src === current);
     selectItems.value.clear()
     files.value.slice(
       Math.min(firstIndex, currentIndex),
       Math.max(firstIndex, currentIndex) + 1
-    ).forEach(v => selectItems.value.add(v))
+    ).forEach(v => selectItems.value.add(v.src))
   } else {
     selectItems.value.add(current)
   }
@@ -79,7 +79,6 @@ onUnmounted(() => {
 
 <template>
 <!--  <n-slider v-model:value="columnNumber" :step="1" :min="1" :max="10"/>-->
-
   <n-scrollbar>
     <div class="content-browser" @click="handleSelectNone" @keydown="handleKeyUp">
       <file-item

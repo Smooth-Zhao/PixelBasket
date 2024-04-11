@@ -3,7 +3,6 @@ import TaskEvent from "../entities/TaskEvent.ts";
 
 const tasks = reactive<TaskEvent[]>([])
 const useTask = () => {
-  console.log(tasks)
   return {
     tasks,
     setTask(task: TaskEvent) {

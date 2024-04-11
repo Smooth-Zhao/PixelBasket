@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import useSelection from "../hooks/useSelection.ts";
-import {NScrollbar,NTooltip,useMessage} from "naive-ui";
+import {NScrollbar,NTooltip,useMessage,NInput,NSpace,NSelect,NRate} from "naive-ui";
+import FilePreview from "./ContentBrowser/components/FilePreview.vue";
+import {computed} from "vue";
 
 const {items} = useSelection()
 const message = useMessage()
@@ -14,13 +16,15 @@ const handleColorItemClick = (color:string) => {
       message.error('复制失败')
     })
 }
-</script>
+const previewSrc = computed(()=>{
+  return Array.from(items.value).at(-1)
+})</script>
 
 <template>
   <n-scrollbar>
     <div class="file-attribute">
       <div class="preview-image">
-        <img style="width: 100%" :src="Array.from(items).at(-1)">
+        <file-preview v-if="previewSrc" :src="previewSrc"/>
       </div>
       <div class="main-colors">
         <n-tooltip trigger="hover">
@@ -36,6 +40,46 @@ const handleColorItemClick = (color:string) => {
         <span style="--item-color:#472abd"></span>
         <span style="--item-color:#4da1dc"></span>
         <span style="--item-color:#4da1dc"></span>
+      </div>
+      <n-space class="file-attribute-edit" vertical>
+        <div class="file-name-input">
+          <label>文件名：</label>
+          <n-input />
+        </div>
+        <div class="file-name-input">
+          <label>标签：</label>
+          <n-select
+            filterable
+            multiple
+            tag
+          />
+        </div>
+        <div class="file-name-input">
+          <label>备注：</label>
+          <n-input/>
+        </div>
+      </n-space>
+      <div class="details">
+        <div class="detail-item">
+          <span>评分</span>
+          <span> <n-rate :size="12" /></span>
+        </div>
+        <div class="detail-item">
+          <span>文件大小</span>
+          <span>10kb</span>
+        </div>
+        <div class="detail-item">
+          <span>尺寸</span>
+          <span>1204 × 1358</span>
+        </div>
+        <div class="detail-item">
+          <span>格式</span>
+          <span>JPG</span>
+        </div>
+        <div class="detail-item">
+          <span>创建日期</span>
+          <span>2024-4-10 16:30:11</span>
+        </div>
       </div>
     </div>
   </n-scrollbar>
@@ -58,14 +102,34 @@ const handleColorItemClick = (color:string) => {
   }
   .main-colors{
     display: flex;
-    gap: 4px;
+    gap: 2px;
     span{
       display: block;
       flex: 1 1 auto;
-      height: 14px;
-      border-radius: 2px;
+      height: 10px;
       background-color: var(--item-color);
       cursor: pointer;
+    }
+  }
+  .file-attribute-edit{
+    margin-top: 16px;
+  }
+  .details{
+    margin-top: 36px;
+    padding: 8px;
+    .detail-item{
+      display: flex;
+      font-size: 12px;
+      span{
+        width: 0;
+      }
+      span:nth-child(1){
+        flex: 2 2 auto;
+      }
+      span:nth-child(2){
+        flex: 3 3 auto;
+        color:var(--color-gray-2);
+      }
     }
   }
 }
