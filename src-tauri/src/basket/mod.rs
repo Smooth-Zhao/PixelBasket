@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use crate::file::image_scanner::ImageScanner;
+use crate::file::model_scanner::ModelScanner;
 use serde::{Deserialize, Serialize};
 
 use crate::file::scan::ScanJob;
@@ -12,15 +13,15 @@ pub struct Basket {
 }
 
 #[tauri::command]
-pub async fn create_basket(basket: Basket, app_handle: tauri::AppHandle) -> &'static str {
-    // println!("{:?}",basket);
+pub fn create_basket(basket: Basket, _app_handle: tauri::AppHandle) -> &'static str {
     for x in basket.directories.iter() {
         let string = x.clone();
-        let handle = app_handle.clone();
         tokio::spawn(async move {
-            let mut scan = ScanJob::new(handle);
+            let mut scan = ScanJob::new();
             scan.add_scanner(ImageScanner::wrap());
-            scan.get_directory_tree(Path::new(string.as_str()));
+            scan.add_scanner(ModelScanner::wrap());
+            scan.load_dir(Path::new(string.as_str()));
+            scan.run_scanner();
         });
     }
     "OK"

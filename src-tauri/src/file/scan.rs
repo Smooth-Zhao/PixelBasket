@@ -1,105 +1,93 @@
-use std::error::Error;
-use std::path::Path;
-use std::time::{Instant, SystemTime, UNIX_EPOCH};
-use std::{fs, io};
+use std::path::{Path, PathBuf};
+use std::time::Instant;
 
-use tauri::{AppHandle, Manager};
-
-use crate::file::Directory;
+use crate::Result;
 
 pub trait Scanner {
-    fn scan(&self, path: &Path) -> Result<bool, Box<dyn Error>>;
+    fn is_support(&self, suffix: &str) -> bool;
+    fn scan(&self, path: &Path) -> Result<bool>;
 }
 
 pub struct ScanJob {
-    app_handle: AppHandle,
-    count: i32,
-    send_time: u128,
-    scanners: Vec<Box<dyn Scanner>>,
+    scanners: Vec<Box<dyn Scanner + Sync>>,
+    pub file_list: Vec<PathBuf>,
+    pub file_count: usize,
+    pub scan_count: usize,
 }
 
 impl ScanJob {
-    pub fn new(app_handle: AppHandle) -> Self {
+    pub fn new() -> Self {
         Self {
-            app_handle,
-            count: 0,
-            send_time: 0,
             scanners: Vec::new(),
+            file_list: Vec::new(),
+            file_count: 0,
+            scan_count: 0,
         }
     }
 
-    pub fn add_scanner(&mut self, scanner: Box<dyn Scanner>) {
+    pub fn add_scanner(&mut self, scanner: Box<dyn Scanner + Sync>) {
         self.scanners.push(scanner);
     }
 
-    pub fn get_directory_tree(&mut self, dir: &Path) -> String {
-        let start = Instant::now(); // 获取当前时间
-        if let Ok(directories) = self.walk(dir) {
-            self.send_count(false);
-            let _json = serde_json::to_string(&directories).unwrap();
-            let end = Instant::now(); // 获取当前时间
-            let duration = end - start; // 计算运行时间
-            println!(
-                "【{:?}】共{}个文件,代码运行时间为{:?}秒",
-                dir.as_os_str(),
-                self.count,
-                duration.as_secs()
-            );
-        };
-        return String::new();
+    pub fn load_dir(&mut self, dir: &Path) {
+        println!("路径：{:?}", dir.as_os_str());
+        let start = Instant::now();
+
+        let _ = self.load_file_list(dir);
+        self.file_count = self.file_list.len();
+
+        println!(
+            "加载{}个文件,代码运行时间为{:?}秒",
+            self.file_count,
+            (Instant::now() - start).as_secs()
+        );
     }
 
-    fn walk(&mut self, dir: &Path) -> io::Result<Vec<Directory>> {
-        let mut directories = Vec::new();
+    fn load_file_list(&mut self, path: &Path) -> Result<()> {
+        if path.is_dir() && !is_hidden(path) {
+            let read = path.read_dir()?;
+            for entry in read.flatten() {
+                self.load_file_list(entry.path().as_path())?
+            }
+        } else if path.is_file() && self.is_support(path) {
+            self.file_list.push(path.to_path_buf());
+        }
+        Ok(())
+    }
 
-        if let Ok(entries) = fs::read_dir(dir) {
-            // 如果是文件夹，递归调用visit_dirs
-            let mut directory = Directory {
-                path: dir.to_string_lossy().into_owned(),
-                children: Vec::new(),
+    fn is_support(&self, path: &Path) -> bool {
+        if let Some(suffix) = get_file_suffix(path) {
+            let string = suffix.to_lowercase();
+            return self.scanners.iter().any(|v| v.is_support(&string));
+        }
+        false
+    }
+
+    pub fn run_scanner(&mut self) {
+        let start = Instant::now();
+
+        for path in self.file_list.iter() {
+            if self
+                .scanners
+                .iter()
+                .map(|v| v.scan(path).is_ok_and(|v| v))
+                .collect::<Vec<bool>>()
+                .iter()
+                .any(|v| *v)
+            {
+                self.scan_count += 1;
             };
-            for entry in entries.flatten() {
-                let path = entry.path();
-                let path = path.as_path();
-                if path.is_dir() && !is_hidden(path) {
-                    match self.walk(path) {
-                        Ok(directories) => directory.children = directories,
-                        Err(e) => println!("Error reading directories: {}", e),
-                    }
-                } else if path.is_file()
-                    && self
-                        .scanners
-                        .iter()
-                        .map(|v| v.scan(path).is_ok_and(|v| v))
-                        .collect::<Vec<bool>>()
-                        .iter()
-                        .any(|v| *v)
-                {
-                    self.count += 1;
-                    self.send_count(true)
-                }
-            }
-            directories.push(directory);
         }
-        Ok(directories)
-    }
 
-    pub fn send_count(&mut self, as_interval: bool) {
-        if as_interval {
-            if let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) {
-                let now = duration.as_millis();
-                if self.send_time == 0 || now - self.send_time > 41 {
-                    let _ = self.app_handle.emit_all("app", self.count);
-                    self.send_time = now;
-                }
-            }
-        } else {
-            let _ = self.app_handle.emit_all("app", self.count);
-        }
+        println!(
+            "扫描{}个文件,代码运行时间为{:?}秒",
+            self.scan_count,
+            (Instant::now() - start).as_secs()
+        );
     }
 }
 
-pub fn is_hidden(path: &Path) -> bool {
+fn is_hidden(path: &Path) -> bool {
     if let Some(file_name) = path.file_name() {
         if let Some(file_name) = file_name.to_str() {
             if file_name.starts_with('.') {
@@ -108,4 +96,8 @@ pub fn is_hidden(path: &Path) -> bool {
         }
     }
     false
+}
+
+fn get_file_suffix(path: &Path) -> Option<&str> {
+    path.extension()?.to_str()
 }
