@@ -1,4 +1,5 @@
-use std::path::PathBuf;
+use std::path::Path;
+use tokio::sync::mpsc::Sender;
 
 use crate::file::scan::Scanner;
 use crate::Result;
@@ -19,7 +20,7 @@ impl Scanner for ModelScanner {
         }
     }
 
-    fn scan(&self, _path: &PathBuf) -> Result<()> {
+    fn scan(&self, _path: &Path, _tx: Sender<String>) -> Result<()> {
         Ok(())
     }
 }
