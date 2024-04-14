@@ -19,7 +19,7 @@ const fileType = computed(() => {
   if (!suffixName) return;
   if (['AVIF', 'BMP', 'DDS', 'FARBFELD', 'GIF', 'HDR', 'ICO', 'JPG', 'JPEG', 'EXR', 'PNG', 'PNM', 'QOI', 'TGA', 'TIFF', 'WEBP'].includes(suffixName)) {
     return "image"
-  } else if (["MP4"].includes(suffixName)) {
+  } else if (["MP4","MOV"].includes(suffixName)) {
     return "video"
   }
   return "unsupported"

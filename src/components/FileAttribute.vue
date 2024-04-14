@@ -3,6 +3,7 @@ import useSelection from "../hooks/useSelection.ts";
 import {NScrollbar,NTooltip,useMessage,NInput,NSpace,NSelect,NRate} from "naive-ui";
 import FilePreview from "./ContentBrowser/components/FilePreview.vue";
 import {computed} from "vue";
+import useContentBrowser from "../hooks/useContentBrowser.ts";
 
 const {items} = useSelection()
 const message = useMessage()
@@ -18,7 +19,9 @@ const handleColorItemClick = (color:string) => {
 }
 const previewSrc = computed(()=>{
   return Array.from(items.value).at(-1)
-})</script>
+})
+const {readDirectory} = useContentBrowser();
+</script>
 
 <template>
   <n-scrollbar>
@@ -35,7 +38,7 @@ const previewSrc = computed(()=>{
         </n-tooltip>
 
         <span style="--item-color:#0effc3"></span>
-        <span style="--item-color:#9916bb"></span>
+        <span @click="readDirectory" style="--item-color:#9916bb"></span>
         <span style="--item-color:#52a275"></span>
         <span style="--item-color:#472abd"></span>
         <span style="--item-color:#4da1dc"></span>

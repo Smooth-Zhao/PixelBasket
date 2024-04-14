@@ -66,23 +66,44 @@ const pause = () => {
   height: 100%;
   position: relative;
 
+  &:hover .video-progress{
+    height: 16px;
+    border-radius: 2px;
+  }
+
   .video-progress {
     position: absolute;
     bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 10px;
+    left: 4px;
+    width: calc(100% - 8px);
+    height: 0;
+    border-radius: 2px;
+    cursor: pointer;
+    &::before{
+      position: absolute;
+      content: "";
+      width: 100%;
+      height: 4px;
+      top: 6px;
+      background-color: var(--color-gray-1);
+    }
     span{
-      margin-top: 6px;
+      position: absolute;
       display: block;
       height: 4px;
+      left: 0;
+      top: 6px;
+      border-radius: 2px;
       background-color: var(--color-light-1);
       pointer-events: none;
     }
-    &:hover span {
-      height: 10px;
-      margin-top: 0;
-    }
+    //&:hover{
+    //  height: 10px;
+    //  span {
+    //    height: 10px;
+    //    border-radius: 5px;
+    //  }
+    //}
   }
 
   video {

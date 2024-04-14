@@ -28,7 +28,8 @@ const handleMouse = (e:MouseEvent) => {
     </div>
     <div class="info">
       <n-ellipsis style="max-width:100%">
-        {{ decodeURIComponent(src).substring(decodeURIComponent(src).lastIndexOf("\\") + 1) }}
+        {{src}}
+<!--        {{ decodeURIComponent(src).substring(decodeURIComponent(src).lastIndexOf("\\") + 1) }}-->
       </n-ellipsis>
       <span class="resolution">4096 * 1080</span>
     </div>
