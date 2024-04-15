@@ -80,16 +80,12 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     }
   }
 }
-const handleDragWindow = (e: MouseEvent) => {
-  appWindow.startDragging()
-  e.stopPropagation()
-  e.preventDefault()
-}
+
 </script>
 
 <template>
   <div class="category">
-    <div class="header" @mousemove="handleDragWindow">
+    <div class="header" data-tauri-drag-region>
       像素篮子
       <div class="action-group">
         <MenuButton/>

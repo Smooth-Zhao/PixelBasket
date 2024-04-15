@@ -5,6 +5,7 @@ import ContentFooter from "./ContentFooter.vue";
 import ContentHeader from "./ContentHeader.vue";
 import useMainContextMenu from "../hooks/useMainContextMenu.ts";
 import FileAttribute from "./FileAttribute.vue";
+// import Dev from "./Dev.vue";
 const { trigger } = useMainContextMenu()
 </script>
 
@@ -22,6 +23,7 @@ const { trigger } = useMainContextMenu()
       <file-attribute/>
     </div>
   </div>
+<!--  <dev/>-->
 </template>
 <style scoped lang="scss">
 .layout {

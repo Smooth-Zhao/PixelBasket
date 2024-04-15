@@ -1,58 +1,39 @@
 <script setup lang="ts">
 import {onMounted, onUnmounted, ref} from "vue";
-import {NSlider, NButton, NScrollbar} from "naive-ui"
-import {open} from "@tauri-apps/api/dialog";
-import {convertFileSrc} from "@tauri-apps/api/tauri";
+import {NScrollbar} from "naive-ui"
 import FileItem from "./components/FileItem.vue";
 import useSelection from "../../hooks/useSelection.ts";
-import {invoke} from "@tauri-apps/api";
+import useContentBrowser from "../../hooks/useContentBrowser.ts";
 
 const columnNumber = ref(4)
-const images = ref<string[]>([])
+
 const {items: selectItems} = useSelection()
+const {files,loadLocalStorage} = useContentBrowser()
 
-const handleTest = async () => {
-  images.value = []
-  const path = await open({
-    directory: true
-  }) as string
-  const result = await invoke("get_directory_files",{path}) as string
-
-  (JSON.parse(result) as string[]).forEach(filePath => {
-    const url = convertFileSrc(filePath)
-    images.value.push(url)
-  })
-  localStorage.setItem("images", JSON.stringify(images.value))
-}
-
-const handleSelect = (e: PointerEvent, name: string) => {
+const handleSelect = (e: PointerEvent, src: string) => {
   if (e.shiftKey) {
-    selectFile(name, true)
+    selectFile(src, true)
   } else if (e.ctrlKey) {
-    selectFile(name)
+    selectFile(src)
   } else {
     selectItems.value.clear()
-    selectFile(name)
+    selectFile(src)
   }
 }
 
 const selectFile = (current: any, addition = false) => {
   if (addition) {
     const arr = Array.from(selectItems.value)
-    const firstIndex = images.value.indexOf(arr.at(0));
-    const currentIndex = images.value.indexOf(current);
+    const firstIndex = files.value.findIndex(v=>v.src === arr.at(0));
+    const currentIndex = files.value.findIndex(v=>v.src === current);
     selectItems.value.clear()
-    images.value.slice(
+    files.value.slice(
       Math.min(firstIndex, currentIndex),
       Math.max(firstIndex, currentIndex) + 1
-    ).forEach(v => selectItems.value.add(v))
+    ).forEach(v => selectItems.value.add(v.src))
   } else {
     selectItems.value.add(current)
   }
-}
-
-const refresh = () => {
-  images.value = JSON.parse(localStorage.getItem("images")) || []
 }
 
 const handleSelectNone = () => {
@@ -87,7 +68,7 @@ const handleArrowKey = (key: string) => {
   }
 }
 onMounted(() => {
-  refresh()
+  loadLocalStorage()
   document.removeEventListener("keyup", handleKeyUp)
   document.addEventListener("keyup", handleKeyUp)
 })
@@ -97,16 +78,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <n-slider v-model:value="columnNumber" :step="1" :min="1" :max="10"/>
-
+<!--  <n-slider v-model:value="columnNumber" :step="1" :min="1" :max="10"/>-->
   <n-scrollbar>
     <div class="content-browser" @click="handleSelectNone" @keydown="handleKeyUp">
-      <n-button @click="handleTest">test</n-button>
       <file-item
-        v-for="item in images"
-        :src="item"
-        :class="{ 'selected': selectItems.has(item) }"
-        @click.stop="handleSelect($event,item)"
+        v-for="item in files"
+        :src="item.src"
+        :class="{ 'selected': selectItems.has(item.src) }"
+        @click.stop="handleSelect($event,item.src)"
       />
     </div>
   </n-scrollbar>

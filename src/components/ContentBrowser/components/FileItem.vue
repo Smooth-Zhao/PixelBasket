@@ -3,25 +3,33 @@ import {NEllipsis} from "naive-ui";
 import useFileContextMenu from "../../../hooks/useFileContextMenu.ts";
 import {useElementVisibility} from "@vueuse/core";
 import {ref} from "vue";
+import FilePreview from "./FilePreview.vue";
+import useSelection from "../../../hooks/useSelection.ts";
 
-defineProps<{
-  src:string
+const props = defineProps<{
+  src: string
 }>()
 const el = ref()
 const {trigger} = useFileContextMenu()
 const visibility = useElementVisibility(el)
 
-
+const {items} = useSelection()
+const handleMouse = (e:MouseEvent) => {
+  items.value.clear()
+  items.value.add(props.src)
+  trigger(e)
+}
 </script>
 
 <template>
-  <div class="file-item" @contextmenu.stop.prevent="trigger" ref="el">
+  <div class="file-item" @contextmenu.stop.prevent="handleMouse" ref="el">
     <div class="cover">
-      <img v-if="visibility" :src="src" alt="">
+      <file-preview show-file-type v-if="visibility" :src="src"/>
     </div>
     <div class="info">
       <n-ellipsis style="max-width:100%">
-        {{decodeURIComponent(src).substring(decodeURIComponent(src).lastIndexOf("\\")+1)}}
+        {{src}}
+<!--        {{ decodeURIComponent(src).substring(decodeURIComponent(src).lastIndexOf("\\") + 1) }}-->
       </n-ellipsis>
       <span class="resolution">4096 * 1080</span>
     </div>
@@ -31,18 +39,12 @@ const visibility = useElementVisibility(el)
 <style scoped lang="scss">
 .file-item {
   overflow: hidden;
+
   .cover {
     width: 100%;
     aspect-ratio: 1/1;
-    border-radius: 8px;
+    //border-radius: 8px;
     overflow: hidden;
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-    }
   }
 
   .info {
@@ -52,6 +54,7 @@ const visibility = useElementVisibility(el)
     margin-top: 16px;
     overflow: hidden;
     width: 100%;
+
     span {
       width: auto;
       max-width: 100%;
@@ -81,7 +84,7 @@ const visibility = useElementVisibility(el)
       left: 0;
       top: 0;
       border: solid 2px #12b444;
-      border-radius: 8px;
+      //border-radius: 8px;
       pointer-events: none;
     }
 

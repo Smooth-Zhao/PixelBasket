@@ -6,16 +6,16 @@
 // invoke("get_directory_tree", { path: "E:\\照片" }).then(res=>{
 //     console.log(JSON.parse(res as string))
 // });
-import Layout from "./components/Layout.vue";
-import {NMessageProvider, NConfigProvider,NModalProvider} from "naive-ui";
+import {NMessageProvider, NConfigProvider, NModalProvider} from "naive-ui";
 import {darkTheme} from 'naive-ui'
+
 </script>
 
 <template>
   <n-config-provider :theme="darkTheme">
     <n-modal-provider>
       <n-message-provider>
-        <Layout/>
+        <router-view/>
       </n-message-provider>
     </n-modal-provider>
   </n-config-provider>
