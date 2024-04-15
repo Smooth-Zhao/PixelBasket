@@ -1,13 +1,15 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use dotenv::dotenv;
-// use pixel_basket::file;
-use pixel_basket::basket;
-use pixel_basket::file::*;
 use std::env;
 use std::path::Path;
 use std::time::Instant;
+
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+use dotenv::dotenv;
 use tauri::Manager;
+
+use pixel_basket::basket;
+// use pixel_basket::file;
+use pixel_basket::file::*;
 
 // use once_cell::sync::Lazy;
 // use std::path::Path;

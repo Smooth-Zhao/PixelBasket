@@ -2,6 +2,8 @@ use core::result::Result as CoreResult;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 
+use crate::error;
+
 pub type Result<T> = CoreResult<T, Box<dyn Error>>;
 
 pub trait ErrorHandle<T> {
@@ -13,7 +15,7 @@ impl<T, E: Debug + Display> ErrorHandle<T> for CoreResult<T, E> {
         match self {
             Ok(t) => Some(t),
             Err(e) => {
-                println!("Err：{}", e);
+                error!("{e}");
                 None
             }
         }

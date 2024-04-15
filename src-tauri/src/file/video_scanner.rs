@@ -7,18 +7,18 @@ use crate::file::scan::Scanner;
 use crate::Result;
 use crate::util::error::ErrorHandle;
 
-pub struct ModelScanner {}
+pub struct VideoScanner {}
 
-impl ModelScanner {
+impl VideoScanner {
     pub fn wrap() -> Box<Self> {
-        Box::new(ModelScanner {})
+        Box::new(VideoScanner {})
     }
 }
 
-impl Scanner for ModelScanner {
+impl Scanner for VideoScanner {
     fn is_support(&self, suffix: &str) -> bool {
         match suffix {
-            "obj" | "fbx" => true,
+            "mp4" | "webm" | "ogg" => true,
             _ => false,
         }
     }
