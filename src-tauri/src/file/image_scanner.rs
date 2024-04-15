@@ -1,20 +1,21 @@
 use std::io::Cursor;
 use std::path::Path;
 
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use chrono::offset::Utc;
-use image::imageops::FilterType;
-use image::{DynamicImage, GenericImageView, ImageFormat};
-use kmeans_colors::{get_kmeans_hamerly, Calculate, CentroidData, Sort};
+use image::{DynamicImage, GenericImageView, ImageFormat, RgbImage};
+use kmeans_colors::{Calculate, CentroidData, get_kmeans_hamerly, Sort};
+use palette::{FromColor, IntoColor, Srgb};
 use palette::cast::ComponentsAs;
-use palette::{FromColor, IntoColor, Srgb, Srgba};
 use sqlx::query;
+use tokio::sync::mpsc::Sender;
 
 use crate::db::sqlite::Session;
-use crate::db::utils::id;
 use crate::file::metadata::{ImageMetadata, Metadata};
 use crate::file::scan::Scanner;
 use crate::Result;
+use crate::util::error::ErrorHandle;
+use crate::util::snowflake::id;
 
 pub struct ImageScanner {}
 
@@ -33,16 +34,23 @@ impl Scanner for ImageScanner {
         }
     }
 
-    fn scan(&self, path: &Path) -> Result<bool> {
+    fn scan(&self, path: &Path, tx: Sender<String>) -> Result<()> {
         let mut metadata = Metadata::load(path);
+        let path = path.to_path_buf();
         if self.is_support(metadata.file_suffix.as_str()) {
-            metadata.analyze_metadata(path)?;
-            let mut image_metadata = ImageMetadata::new(metadata);
-            analyze_image_metadata(path, &mut image_metadata)?;
-            save_to_db(image_metadata);
-            return Ok(true);
+            tokio::spawn(async move {
+                if metadata.analyze_metadata(&path).is_ok() {
+                    let mut image_metadata = ImageMetadata::new(metadata);
+                    if analyze_image_metadata(&path, &mut image_metadata).is_ok() {
+                        save_to_db(&image_metadata).await;
+                        tx.send(image_metadata.metadata.file_path)
+                            .await
+                            .print_error();
+                    };
+                };
+            });
         }
-        Ok(false)
+        Ok(())
     }
 }
 
@@ -52,7 +60,7 @@ fn analyze_image_metadata(path: &Path, image_metadata: &mut ImageMetadata) -> Re
     let dimensions = image.dimensions();
     image_metadata.image_width = dimensions.0;
     image_metadata.image_height = dimensions.1;
-    let resize_image = resize(
+    let resize_image = thumbnail(
         &image,
         image_metadata.image_width,
         image_metadata.image_height,
@@ -67,35 +75,35 @@ fn analyze_image_metadata(path: &Path, image_metadata: &mut ImageMetadata) -> Re
 }
 
 /// 生成图片缩咯图
-fn resize(image: &DynamicImage, w: u32, h: u32) -> DynamicImage {
+fn thumbnail(image: &DynamicImage, w: u32, h: u32) -> RgbImage {
     let w1 = 200;
     let h1 = (200f32 / w as f32 * h as f32) as u32;
-    image.resize(w1, h1, FilterType::Triangle)
+    image.thumbnail(w1, h1).to_rgb8()
 }
 
 /// 生成base64图片
-fn image_to_base64(image: &DynamicImage) -> Option<String> {
+fn image_to_base64(image: &RgbImage) -> Option<String> {
     let mut buffer = Vec::new();
-    if image
+    image
         .write_to(&mut Cursor::new(&mut buffer), ImageFormat::Jpeg)
-        .is_ok()
-    {
+        .print_error();
+    if !buffer.is_empty() {
         let base64 = general_purpose::STANDARD.encode(&buffer);
-        return Some(format!("data:image/jpg;base64,{}", base64));
+        Some(format!("data:image/jpg;base64,{}", base64))
+    } else {
+        None
     }
-    None
 }
 
 /// 提取主题色
-fn kmeans(image: &DynamicImage) -> String {
-    let img = image.to_rgba8();
-    let img_vec: &[Srgba<u8>] = img.as_raw().components_as();
+fn kmeans(image: &RgbImage) -> String {
+    let img_vec: &[Srgb<u8>] = image.as_raw().components_as();
 
     let mut rgb_pixels: Vec<Srgb<f32>> = Vec::new();
     rgb_pixels.extend(
         img_vec
             .iter()
-            .map(|x| Srgb::<f32>::from_color(x.into_format::<_, f32>())),
+            .map(|x| Srgb::<f32>::from_color(x.into_format())),
     );
 
     let result = get_kmeans_hamerly(8, 1, 0.0025, false, &rgb_pixels, 0);
@@ -124,23 +132,22 @@ fn greatest_common_divisor(a: u32, b: u32) -> u32 {
     }
 }
 
-fn save_to_db(image_metadata: ImageMetadata) {
-    tokio::spawn(async move {
-        let mut session = Session::new("./db/main.db");
-        session.connect().await;
-        if let Ok(pool) = &session.get_pool() {
-            if let Ok(result) = session
-                .count(
-                    format!(
-                        "SELECT COUNT(*) AS count FROM metadata WHERE sha1 = '{}'",
-                        &image_metadata.metadata.sha1
-                    )
-                    .as_str(),
+async fn save_to_db(image_metadata: &ImageMetadata) {
+    let mut session = Session::new("./db/main.db");
+    session.connect().await;
+    if let Ok(pool) = &session.get_pool() {
+        if let Ok(result) = session
+            .count(
+                format!(
+                    "SELECT COUNT(*) AS count FROM metadata WHERE sha1 = '{}'",
+                    &image_metadata.metadata.sha1
                 )
-                .await
-            {
-                if result.count == 0 {
-                    let _ = query("INSERT INTO metadata (id, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                .as_str(),
+            )
+            .await
+        {
+            if result.count == 0 {
+                let _ = query("INSERT INTO metadata (id, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                         .bind(id::<i64>())
                         .bind(&image_metadata.metadata.file_name)
                         .bind(&image_metadata.metadata.file_path)
@@ -162,8 +169,7 @@ fn save_to_db(image_metadata: ImageMetadata) {
                         .bind(&image_metadata.metadata.sha1)
                         .execute(pool)
                         .await;
-                }
             }
         }
-    });
+    }
 }
