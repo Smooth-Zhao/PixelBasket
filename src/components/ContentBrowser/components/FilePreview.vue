@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import {computed, ref} from "vue";
+import {computed} from "vue";
 import {convertFileSrc} from "@tauri-apps/api/tauri";
-import VideoPreview from "./VideoPreview.vue";
+import {VideoViewer,ImageViewer} from "../../FileViewer";
+import {getFileType} from "../../../utils";
 
 const props = defineProps<{
   src: string,
+  controls?:boolean
   showFileType?: boolean
 }>()
 
@@ -15,14 +17,8 @@ const suffixName = computed(() => {
 })
 
 const fileType = computed(() => {
-  const suffixName = props.src?.split('.').pop()?.toUpperCase();
-  if (!suffixName) return;
-  if (['AVIF', 'BMP', 'DDS', 'FARBFELD', 'GIF', 'HDR', 'ICO', 'JPG', 'JPEG', 'EXR', 'PNG', 'PNM', 'QOI', 'TGA', 'TIFF', 'WEBP'].includes(suffixName)) {
-    return "image"
-  } else if (["MP4","MOV"].includes(suffixName)) {
-    return "video"
-  }
-  return "unsupported"
+  if (!suffixName.value) return;
+  return getFileType(suffixName.value)
 })
 
 </script>
@@ -30,12 +26,12 @@ const fileType = computed(() => {
 <template>
   <div class="file-preview">
     <img v-if="fileType === 'image'" :src="assetSrc" alt="">
-    <video-preview  v-else-if="fileType === 'video'" :src="assetSrc"/>
+    <video-viewer v-else-if="fileType === 'video'" :src="assetSrc"/>
     <span v-else>
       Unsupported File Type
     </span>
 
-    <div v-if="fileType!== 'unsupported' && showFileType" class="file-type-tag" :class="fileType">{{ suffixName }}</div>
+    <div v-if="fileType!== 'other' && showFileType" class="file-type-tag" :class="fileType">{{ suffixName }}</div>
   </div>
 </template>
 
@@ -47,6 +43,13 @@ const fileType = computed(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+
+  img{
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 
 
   .file-type-tag {
@@ -67,10 +70,4 @@ const fileType = computed(() => {
   }
 }
 
-img {
-  object-fit: contain;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
 </style>

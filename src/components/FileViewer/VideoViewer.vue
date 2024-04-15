@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import {throttle} from "../../../utils";
+import {throttle} from "../../utils";
 
 defineProps<{
   src: string
@@ -52,7 +52,7 @@ const pause = () => {
 </script>
 
 <template>
-  <div class="video-preview" @mouseenter="play" @mouseleave="stop">
+  <div class="video-viewer" @mouseenter="play" @mouseleave="stop">
     <video ref="videoRef" muted :src="src"/>
     <div class="video-progress" @mousemove.self="handleProgress"  @mouseenter="pause" @mouseleave="play">
       <span :style="{ width:videoPlayProgress + '%' }"></span>
@@ -61,7 +61,7 @@ const pause = () => {
 </template>
 
 <style scoped lang="scss">
-.video-preview {
+.video-viewer {
   width: 100%;
   height: 100%;
   position: relative;
