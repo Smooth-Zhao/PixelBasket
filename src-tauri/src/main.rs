@@ -3,16 +3,15 @@
 use dotenv::dotenv;
 // use pixel_basket::file;
 use pixel_basket::basket;
+use pixel_basket::file::*;
 use std::env;
 use std::path::Path;
 use std::time::Instant;
-use tauri::{ Manager };
-use pixel_basket::file::*;
+use tauri::Manager;
 
 // use once_cell::sync::Lazy;
 // use std::path::Path;
 // use std::time::Instant;
-
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -35,13 +34,18 @@ async fn main() {
     println!("Listening on port: {}", port);
 
     tauri::Builder::default()
-        .setup( move |app| {
+        .setup(move |app| {
             // 设置 AppHandle 的值
             let mut handle = APP_HANDLE.lock().unwrap();
             *handle = Some(app.app_handle());
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![basket::create_basket,get_directory_files])
+        .invoke_handler(tauri::generate_handler![
+            basket::create_basket,
+            basket::get_metadata,
+            basket::del_metadata,
+            get_directory_files
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

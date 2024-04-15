@@ -2,16 +2,20 @@ use std::error::Error;
 use std::io::Error as IoError;
 use std::path::Path;
 
+use crate::db::sqlite::Session;
+use crate::util::snowflake::id;
 use chrono::{DateTime, Utc};
 use file_hashing::get_hash_file;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
+use sqlx::query;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct Metadata {
+    pub id: i64,
     pub file_path: String,
     pub file_name: String,
-    pub file_size: u64,
+    pub file_size: i64,
     pub file_suffix: String,
     pub added: String,
     pub created: String,
@@ -21,11 +25,20 @@ pub struct Metadata {
     pub score: f32,
     pub is_del: u8,
     pub sha1: String,
+    // image
+    pub image_width: u32,
+    pub image_height: u32,
+    pub thumbnail: String,
+    pub colors: String,
+    pub shape: String,
+    // video
+    pub duration: i64,
 }
 
 impl Metadata {
     pub fn empty() -> Self {
         Metadata {
+            id: -1,
             file_path: String::new(),
             file_name: String::new(),
             file_size: 0,
@@ -38,6 +51,14 @@ impl Metadata {
             score: 0.0,
             is_del: 0,
             sha1: String::new(),
+            // image
+            image_width: 0,
+            image_height: 0,
+            thumbnail: String::new(),
+            colors: String::new(),
+            shape: String::new(),
+            // video
+            duration: 0,
         }
     }
 
@@ -62,7 +83,7 @@ impl Metadata {
             }
         }
         let file_metadata = path.metadata()?;
-        self.file_size = file_metadata.len();
+        self.file_size = file_metadata.len() as i64;
         let datetime: DateTime<Utc> = file_metadata.created()?.into();
         self.created = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
         let datetime: DateTime<Utc> = file_metadata.modified()?.into();
@@ -70,27 +91,46 @@ impl Metadata {
         self.sha1 = sha1(path)?;
         Ok(())
     }
-}
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ImageMetadata {
-    pub metadata: Metadata,
-    pub image_width: u32,
-    pub image_height: u32,
-    pub thumbnail: String,
-    pub colors: String,
-    pub shape: String,
-}
-
-impl ImageMetadata {
-    pub fn new(metadata: Metadata) -> Self {
-        ImageMetadata {
-            metadata,
-            image_width: 0,
-            image_height: 0,
-            thumbnail: String::new(),
-            colors: String::new(),
-            shape: String::new(),
+    pub async fn save_to_db(&self) {
+        let mut session = Session::new("./db/main.db");
+        session.connect().await;
+        if let Ok(pool) = &session.get_pool() {
+            if let Ok(result) = session
+                .count(
+                    format!(
+                        "SELECT COUNT(*) AS count FROM metadata WHERE sha1 = '{}'",
+                        &self.sha1
+                    )
+                    .as_str(),
+                )
+                .await
+            {
+                if result.count == 0 {
+                    let _ = query("INSERT INTO metadata (id, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                        .bind(id::<i64>())
+                        .bind(&self.file_name)
+                        .bind(&self.file_path)
+                        .bind(&self.file_size)
+                        .bind(&self.file_suffix)
+                        .bind(Utc::now().format("%Y-%m-%d %H:%M:%S").to_string())
+                        .bind(&self.created)
+                        .bind(&self.modified)
+                        .bind(&self.image_width)
+                        .bind(&self.image_height)
+                        .bind(&self.thumbnail)
+                        .bind(&self.tags)
+                        .bind(&self.exegesis)
+                        .bind(&self.score)
+                        .bind(&self.colors)
+                        .bind(&self.shape)
+                        .bind(&self.duration)
+                        .bind(&self.is_del)
+                        .bind(&self.sha1)
+                        .execute(pool)
+                        .await;
+                }
+            }
         }
     }
 }
