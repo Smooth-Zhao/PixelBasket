@@ -4,7 +4,7 @@ use std::path::Path;
 
 use crate::db::sqlite::Session;
 use crate::util::snowflake::id;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Local};
 use file_hashing::get_hash_file;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
@@ -84,9 +84,9 @@ impl Metadata {
         }
         let file_metadata = path.metadata()?;
         self.file_size = file_metadata.len() as i64;
-        let datetime: DateTime<Utc> = file_metadata.created()?.into();
+        let datetime: DateTime<Local> = file_metadata.created()?.into();
         self.created = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
-        let datetime: DateTime<Utc> = file_metadata.modified()?.into();
+        let datetime: DateTime<Local> = file_metadata.modified()?.into();
         self.modified = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
         self.sha1 = sha1(path)?;
         Ok(())
@@ -113,7 +113,7 @@ impl Metadata {
                         .bind(&self.file_path)
                         .bind(&self.file_size)
                         .bind(&self.file_suffix)
-                        .bind(Utc::now().format("%Y-%m-%d %H:%M:%S").to_string())
+                        .bind(Local::now().format("%Y-%m-%d %H:%M:%S").to_string())
                         .bind(&self.created)
                         .bind(&self.modified)
                         .bind(&self.image_width)

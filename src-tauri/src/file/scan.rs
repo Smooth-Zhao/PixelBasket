@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use tokio::sync::mpsc::Sender;
+use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::Result;
+use crate::{debug, info, Result};
 
 pub trait Scanner {
     fn is_support(&self, suffix: &str) -> bool;
@@ -12,14 +12,16 @@ pub trait Scanner {
 
 pub struct ScanJob {
     scanners: Vec<Box<dyn Scanner + Send>>,
+    tx: Sender<String>,
     pub file_list: Vec<PathBuf>,
     pub file_count: usize,
     pub scan_count: usize,
 }
 
 impl ScanJob {
-    pub fn new() -> Self {
+    pub fn new(tx: Sender<String>) -> Self {
         Self {
+            tx,
             scanners: Vec::new(),
             file_list: Vec::new(),
             file_count: 0,
@@ -31,21 +33,19 @@ impl ScanJob {
         self.scanners = scanners;
     }
 
-    pub fn run(mut self, directories: Vec<String>, tx: Sender<String>) {
-        tokio::spawn(async move {
-            self.load_dir(directories);
-            self.run_scanner(tx);
-        });
+    pub fn run(&mut self, directories: Vec<String>) {
+        self.load_dir(directories);
+        self.run_scanner();
     }
 
     pub fn load_dir(&mut self, directories: Vec<String>) {
         let start = Instant::now();
         directories.iter().map(|v| Path::new(v)).for_each(|v| {
-            println!("路径：{:?}", v.as_os_str());
+            info!("路径：{:?}", v.as_os_str());
             self.load_file_list(v).unwrap();
             self.file_count = self.file_list.len();
         });
-        println!(
+        info!(
             "加载{}个文件,代码运行时间为{:?}秒",
             self.file_count,
             (Instant::now() - start).as_secs()
@@ -72,20 +72,32 @@ impl ScanJob {
         false
     }
 
-    pub fn run_scanner(&mut self, tx: Sender<String>) {
+    pub fn run_scanner(&mut self) {
         let start = Instant::now();
 
         for path in self.file_list.iter() {
             for scanner in self.scanners.iter() {
-                let _ = scanner.scan(path, tx.clone());
+                let _ = scanner.scan(path, self.tx.clone());
             }
         }
 
-        println!(
+        info!(
             "扫描{}个文件,代码运行时间为{:?}秒",
             self.file_count,
             (Instant::now() - start).as_secs()
         );
+    }
+
+    pub fn run_async(mut self, directories: Vec<String>) {
+        tokio::spawn(async move { self.run(directories) });
+    }
+
+    pub fn monitor_async(&self, mut rx: Receiver<String>) {
+        tokio::spawn(async move {
+            while let Some(msg) = rx.recv().await {
+                debug!("{}", msg);
+            }
+        });
     }
 }
 

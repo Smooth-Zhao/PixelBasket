@@ -30,7 +30,11 @@ impl Scanner for ImageScanner {
         }
     }
 
-    fn scan(&self, path: &Path, tx: Sender<String>) -> Result<()> {
+    fn scan(
+        &self,
+        path: &Path,
+        tx: Sender<String>
+    ) -> Result<()> {
         let mut metadata = Metadata::load(path);
         let path = path.to_path_buf();
         if self.is_support(metadata.file_suffix.as_str()) {
@@ -38,9 +42,7 @@ impl Scanner for ImageScanner {
                 if metadata.analyze_metadata(&path).is_ok() {
                     if analyze_image_metadata(&path, &mut metadata).is_ok() {
                         metadata.save_to_db().await;
-                        tx.send(metadata.file_path)
-                            .await
-                            .print_error();
+                        tx.send(metadata.file_path).await.print_error();
                     };
                 };
             });
@@ -55,17 +57,12 @@ fn analyze_image_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     let dimensions = image.dimensions();
     metadata.image_width = dimensions.0;
     metadata.image_height = dimensions.1;
-    let resize_image = thumbnail(
-        &image,
-        metadata.image_width,
-        metadata.image_height,
-    );
+    let resize_image = thumbnail(&image, metadata.image_width, metadata.image_height);
     if let Some(base64) = image_to_base64(&resize_image) {
         metadata.thumbnail = base64;
     }
     metadata.colors = kmeans(&resize_image);
-    metadata.shape =
-        calculated_shape(metadata.image_width, metadata.image_height);
+    metadata.shape = calculated_shape(metadata.image_width, metadata.image_height);
     Ok(())
 }
 

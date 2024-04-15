@@ -8,6 +8,7 @@ use crate::file::image_scanner::ImageScanner;
 use crate::file::metadata::Metadata;
 use crate::file::model_scanner::ModelScanner;
 use crate::file::scan::ScanJob;
+use crate::file::video_scanner::VideoScanner;
 use crate::util::error::ErrorHandle;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,15 +19,15 @@ pub struct Basket {
 
 #[tauri::command]
 pub fn create_basket(basket: Basket, _app_handle: tauri::AppHandle) -> &'static str {
-    let (tx, mut rx) = channel::<String>(16);
-    let mut scan = ScanJob::new();
-    scan.add_scanners(vec![ImageScanner::wrap(), ModelScanner::wrap()]);
-    scan.run(basket.directories, tx.clone());
-    tokio::spawn(async move {
-        while let Some(msg) = rx.recv().await {
-            println!("{}", msg);
-        }
-    });
+    let (tx, rx) = channel::<String>(16);
+    let mut scan = ScanJob::new(tx);
+    scan.add_scanners(vec![
+        ImageScanner::wrap(),
+        ModelScanner::wrap(),
+        VideoScanner::wrap(),
+    ]);
+    scan.monitor_async(rx);
+    scan.run_async(basket.directories);
     "OK"
 }
 
@@ -37,14 +38,10 @@ pub struct Page {
 }
 
 #[tauri::command]
-pub async fn get_metadata(page: Page) -> Vec<Metadata> {
+pub async fn get_metadata() -> Vec<Metadata> {
     let mut session = Session::new("./db/main.db");
     session.connect().await;
-    let sql = format!(
-        "SELECT * FROM metadata WHERE is_del = 0 LIMIT {},{}",
-        page.current, page.size
-    );
-    if let Some(metadata) = session.select_as::<Metadata>(&sql).await.print_error() {
+    if let Some(metadata) = session.select_as::<Metadata>("SELECT * FROM metadata WHERE is_del = 0").await.print_error() {
         return metadata;
     }
     Vec::new()
