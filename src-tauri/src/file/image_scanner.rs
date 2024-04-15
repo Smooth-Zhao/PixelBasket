@@ -2,20 +2,16 @@ use std::io::Cursor;
 use std::path::Path;
 
 use base64::{Engine as _, engine::general_purpose};
-use chrono::offset::Utc;
 use image::{DynamicImage, GenericImageView, ImageFormat, RgbImage};
 use kmeans_colors::{Calculate, CentroidData, get_kmeans_hamerly, Sort};
 use palette::{FromColor, IntoColor, Srgb};
 use palette::cast::ComponentsAs;
-use sqlx::query;
 use tokio::sync::mpsc::Sender;
 
-use crate::db::sqlite::Session;
-use crate::file::metadata::{ImageMetadata, Metadata};
+use crate::file::metadata::Metadata;
 use crate::file::scan::Scanner;
 use crate::Result;
 use crate::util::error::ErrorHandle;
-use crate::util::snowflake::id;
 
 pub struct ImageScanner {}
 
@@ -40,10 +36,9 @@ impl Scanner for ImageScanner {
         if self.is_support(metadata.file_suffix.as_str()) {
             tokio::spawn(async move {
                 if metadata.analyze_metadata(&path).is_ok() {
-                    let mut image_metadata = ImageMetadata::new(metadata);
-                    if analyze_image_metadata(&path, &mut image_metadata).is_ok() {
-                        save_to_db(&image_metadata).await;
-                        tx.send(image_metadata.metadata.file_path)
+                    if analyze_image_metadata(&path, &mut metadata).is_ok() {
+                        metadata.save_to_db().await;
+                        tx.send(metadata.file_path)
                             .await
                             .print_error();
                     };
@@ -55,22 +50,22 @@ impl Scanner for ImageScanner {
 }
 
 /// 解析图片元数据
-fn analyze_image_metadata(path: &Path, image_metadata: &mut ImageMetadata) -> Result<()> {
+fn analyze_image_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     let image = image::open(path)?;
     let dimensions = image.dimensions();
-    image_metadata.image_width = dimensions.0;
-    image_metadata.image_height = dimensions.1;
+    metadata.image_width = dimensions.0;
+    metadata.image_height = dimensions.1;
     let resize_image = thumbnail(
         &image,
-        image_metadata.image_width,
-        image_metadata.image_height,
+        metadata.image_width,
+        metadata.image_height,
     );
     if let Some(base64) = image_to_base64(&resize_image) {
-        image_metadata.thumbnail = base64;
+        metadata.thumbnail = base64;
     }
-    image_metadata.colors = kmeans(&resize_image);
-    image_metadata.shape =
-        calculated_shape(image_metadata.image_width, image_metadata.image_height);
+    metadata.colors = kmeans(&resize_image);
+    metadata.shape =
+        calculated_shape(metadata.image_width, metadata.image_height);
     Ok(())
 }
 
@@ -129,47 +124,5 @@ fn greatest_common_divisor(a: u32, b: u32) -> u32 {
         b
     } else {
         greatest_common_divisor(b % a, a)
-    }
-}
-
-async fn save_to_db(image_metadata: &ImageMetadata) {
-    let mut session = Session::new("./db/main.db");
-    session.connect().await;
-    if let Ok(pool) = &session.get_pool() {
-        if let Ok(result) = session
-            .count(
-                format!(
-                    "SELECT COUNT(*) AS count FROM metadata WHERE sha1 = '{}'",
-                    &image_metadata.metadata.sha1
-                )
-                .as_str(),
-            )
-            .await
-        {
-            if result.count == 0 {
-                let _ = query("INSERT INTO metadata (id, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
-                        .bind(id::<i64>())
-                        .bind(&image_metadata.metadata.file_name)
-                        .bind(&image_metadata.metadata.file_path)
-                        .bind(image_metadata.metadata.file_size as i64)
-                        .bind(&image_metadata.metadata.file_suffix)
-                        .bind(Utc::now().format("%Y-%m-%d %H:%M:%S").to_string())
-                        .bind(&image_metadata.metadata.created)
-                        .bind(&image_metadata.metadata.modified)
-                        .bind(image_metadata.image_width)
-                        .bind(image_metadata.image_height)
-                        .bind(&image_metadata.thumbnail)
-                        .bind(&image_metadata.metadata.tags)
-                        .bind(&image_metadata.metadata.exegesis)
-                        .bind(image_metadata.metadata.score)
-                        .bind(&image_metadata.colors)
-                        .bind(&image_metadata.shape)
-                        .bind(0)
-                        .bind(0)
-                        .bind(&image_metadata.metadata.sha1)
-                        .execute(pool)
-                        .await;
-            }
-        }
     }
 }
