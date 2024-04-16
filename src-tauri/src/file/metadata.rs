@@ -64,6 +64,9 @@ impl Metadata {
 
     pub fn load(path: &Path) -> Self {
         let mut metadata = Self::empty();
+        if let Some(file_path) = path.to_str() {
+            metadata.file_path = file_path.to_string();
+        }
         if let Some(extension) = path.extension() {
             if let Some(file_suffix) = extension.to_str() {
                 metadata.file_suffix = file_suffix.to_lowercase();
@@ -74,9 +77,6 @@ impl Metadata {
 
     /// 解析文件元数据
     pub fn analyze_metadata(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
-        if let Some(file_path) = path.to_str() {
-            self.file_path = file_path.to_string();
-        }
         if let Some(file_name) = path.file_name() {
             if let Some(file_name) = file_name.to_str() {
                 self.file_name = file_name.to_string();
@@ -133,9 +133,88 @@ impl Metadata {
             }
         }
     }
+
+    pub async fn save_task_to_db(&self) {
+        let mut session = Session::new("./db/main.db");
+        session.connect().await;
+        if let Ok(pool) = &session.get_pool() {
+            if let Ok(result) = session
+                .count(
+                    format!(
+                        "SELECT COUNT(*) AS count FROM task WHERE file_path = '{}'",
+                        &self.file_path
+                    )
+                    .as_str(),
+                )
+                .await
+            {
+                if result.count == 0 {
+                    let _ = query(
+                        "INSERT INTO task (id, file_path, file_suffix, status) VALUES (?, ?, ?, ?)",
+                    )
+                    .bind(id::<i64>())
+                    .bind(&self.file_path)
+                    .bind(&self.file_suffix)
+                    .bind(0)
+                    .execute(pool)
+                    .await;
+                }
+            }
+        }
+    }
 }
 
 fn sha1<P: AsRef<Path>>(path: P) -> Result<String, IoError> {
     let mut hasher = Sha1::new();
     get_hash_file(path, &mut hasher)
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MetadataVO {
+    pub id: String,
+    pub file_path: String,
+    pub file_name: String,
+    pub file_size: i64,
+    pub file_suffix: String,
+    pub added: String,
+    pub created: String,
+    pub modified: String,
+    pub tags: String,
+    pub exegesis: String,
+    pub score: f32,
+    pub is_del: u8,
+    pub sha1: String,
+    pub image_width: u32,
+    pub image_height: u32,
+    pub thumbnail: String,
+    pub colors: String,
+    pub shape: String,
+    pub duration: i64,
+}
+
+impl MetadataVO {
+    pub fn from(metadata: Metadata) -> Self {
+        Self {
+            id: metadata.id.to_string(),
+            file_path: metadata.file_path,
+            file_name: metadata.file_name,
+            file_size: metadata.file_size,
+            file_suffix: metadata.file_suffix,
+            added: metadata.added,
+            created: metadata.created,
+            modified: metadata.modified,
+            tags: metadata.tags,
+            exegesis: metadata.exegesis,
+            score: metadata.score,
+            is_del: metadata.is_del,
+            sha1: metadata.sha1,
+            image_width: metadata.image_width,
+            image_height: metadata.image_height,
+            thumbnail: metadata.thumbnail,
+            colors: metadata.colors,
+            shape: metadata.shape,
+            duration: metadata.duration,
+        }
+    }
 }

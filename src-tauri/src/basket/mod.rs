@@ -5,9 +5,9 @@ use tokio::sync::mpsc::channel;
 
 use crate::db::sqlite::Session;
 use crate::file::image_scanner::ImageScanner;
-use crate::file::metadata::Metadata;
+use crate::file::metadata::{Metadata, MetadataVO};
 use crate::file::model_scanner::ModelScanner;
-use crate::file::scan::ScanJob;
+use crate::file::scan::{ScanJob, ScanMsg};
 use crate::file::video_scanner::VideoScanner;
 use crate::util::error::ErrorHandle;
 
@@ -19,7 +19,7 @@ pub struct Basket {
 
 #[tauri::command]
 pub fn create_basket(basket: Basket, _app_handle: tauri::AppHandle) -> &'static str {
-    let (tx, rx) = channel::<String>(16);
+    let (tx, rx) = channel::<ScanMsg>(16);
     let mut scan = ScanJob::new(tx);
     scan.add_scanners(vec![
         ImageScanner::wrap(),
@@ -38,11 +38,15 @@ pub struct Page {
 }
 
 #[tauri::command]
-pub async fn get_metadata() -> Vec<Metadata> {
+pub async fn get_metadata() -> Vec<MetadataVO> {
     let mut session = Session::new("./db/main.db");
     session.connect().await;
-    if let Some(metadata) = session.select_as::<Metadata>("SELECT * FROM metadata WHERE is_del = 0").await.print_error() {
-        return metadata;
+    if let Some(metadata) = session
+        .select_as::<Metadata>("SELECT * FROM metadata WHERE is_del = 0")
+        .await
+        .print_error()
+    {
+        return metadata.into_iter().map(|v| MetadataVO::from(v)).collect();
     }
     Vec::new()
 }
