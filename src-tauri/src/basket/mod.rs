@@ -52,6 +52,17 @@ pub async fn get_metadata() -> Vec<MetadataVO> {
 }
 
 #[tauri::command]
+pub async fn get_metadata_by_id(id: String) -> MetadataVO {
+    let mut session = Session::new("./db/main.db");
+    session.connect().await;
+    let sql = format!("SELECT * FROM metadata WHERE id = {}", id);
+    if let Some(metadata) = session.select_one_as::<Metadata>(&sql).await.print_error() {
+        return MetadataVO::from(metadata);
+    }
+    MetadataVO::empty()
+}
+
+#[tauri::command]
 pub async fn del_metadata(id: i64) -> bool {
     let mut session = Session::new("./db/main.db");
     session.connect().await;

@@ -127,6 +127,54 @@ impl Session {
         Err(sqlx::Error::PoolClosed)
     }
 
+    /// 查询语句
+    ///
+    /// ```rust,no_run
+    /// use sqlx::sqlite::SqliteRow;
+    ///
+    /// # use pixel_basket::db::sqlite::Session;
+    /// # async fn example() {
+    /// let mut session = Session::new("test.db");
+    /// // 先建立连接
+    /// session.connect().await;
+    ///
+    /// let result: SqliteRow = session.select_one("SELECT * FROM example").await.expect("");
+    /// # }
+    pub async fn select_one(&self, sql: &str) -> Result<SqliteRow, sqlx::Error> {
+        if let Some(pool) = &self.pool {
+            return query(sql).fetch_one(pool).await;
+        }
+        Err(sqlx::Error::PoolClosed)
+    }
+
+    /// 查询语句
+    ///
+    /// ```rust,no_run
+    /// use sqlx::sqlite::SqliteRow;   
+    ///
+    /// #[derive(sqlx::FromRow)]
+    /// struct User {
+    ///    // ...
+    /// }
+    ///
+    /// # use pixel_basket::db::sqlite::Session;
+    /// # async fn example() {
+    /// let mut session = Session::new("test.db");
+    /// // 先建立连接
+    /// session.connect().await;
+    ///
+    /// let result: User = session.select_one_as::<User>("SELECT * FROM example").await.expect("");
+    /// # }
+    pub async fn select_one_as<T: for<'r> FromRow<'r, SqliteRow> + Send + Unpin>(
+        &self,
+        sql: &str,
+    ) -> Result<T, sqlx::Error> {
+        if let Some(pool) = &self.pool {
+            return query_as::<_, T>(sql).fetch_one(pool).await;
+        }
+        Err(sqlx::Error::PoolClosed)
+    }
+
     /// 查询条数
     ///
     /// ```rust,no_run
