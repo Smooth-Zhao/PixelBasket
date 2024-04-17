@@ -2,29 +2,50 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use tokio::sync::mpsc::{Receiver, Sender};
+use tokio::task::JoinHandle;
 
+use crate::db::sqlite::Session;
+use crate::file::metadata::Metadata;
+use crate::file::task::Task;
+use crate::util::error::ErrorHandle;
+use crate::util::snowflake::id_str;
 use crate::{debug, info, Result};
 
 pub trait Scanner {
     fn is_support(&self, suffix: &str) -> bool;
-    fn scan(&self, path: &Path, tx: Sender<String>) -> Result<()>;
+    fn scan(&self, path: &Path, tx: Sender<ScanMsg>) -> Option<JoinHandle<()>>;
+}
+
+pub struct ScanMsg {
+    pub r#type: String,
+    pub data: String,
+}
+
+impl ScanMsg {
+    pub fn new(r#type: String, data: String) -> Self {
+        Self { r#type, data }
+    }
 }
 
 pub struct ScanJob {
+    id: String,
     scanners: Vec<Box<dyn Scanner + Send>>,
-    tx: Sender<String>,
+    tx: Sender<ScanMsg>,
     pub file_list: Vec<PathBuf>,
     pub file_count: usize,
+    pub task_count: usize,
     pub scan_count: usize,
 }
 
 impl ScanJob {
-    pub fn new(tx: Sender<String>) -> Self {
+    pub fn new(tx: Sender<ScanMsg>) -> Self {
         Self {
-            tx,
+            id: id_str(),
             scanners: Vec::new(),
+            tx,
             file_list: Vec::new(),
             file_count: 0,
+            task_count: 0,
             scan_count: 0,
         }
     }
@@ -33,20 +54,29 @@ impl ScanJob {
         self.scanners = scanners;
     }
 
-    pub fn run(&mut self, directories: Vec<String>) {
-        self.load_dir(directories);
-        self.run_scanner();
+    pub async fn run(&mut self, directories: Vec<String>) {
+        self.load_dir(directories).await;
+        self.load_task().await;
+        self.run_scanner().await;
     }
 
-    pub fn load_dir(&mut self, directories: Vec<String>) {
+    pub async fn load_dir(&mut self, directories: Vec<String>) {
         let start = Instant::now();
         directories.iter().map(|v| Path::new(v)).for_each(|v| {
-            info!("路径：{:?}", v.as_os_str());
+            info!("<scan:{}> 路径：{:?}", self.id, v.as_os_str());
             self.load_file_list(v).unwrap();
             self.file_count = self.file_list.len();
         });
+        self.tx
+            .send(ScanMsg::new(
+                "file".to_string(),
+                self.file_count.to_string(),
+            ))
+            .await
+            .print_error();
         info!(
-            "加载{}个文件,代码运行时间为{:?}秒",
+            "<scan:{}> 加载{}个文件,代码运行时间为{:?}秒",
+            self.id,
             self.file_count,
             (Instant::now() - start).as_secs()
         );
@@ -72,31 +102,85 @@ impl ScanJob {
         false
     }
 
-    pub fn run_scanner(&mut self) {
+    pub async fn load_task(&mut self) {
         let start = Instant::now();
 
         for path in self.file_list.iter() {
-            for scanner in self.scanners.iter() {
-                let _ = scanner.scan(path, self.tx.clone());
-            }
+            let metadata = Metadata::load(path);
+            metadata.save_task_to_db().await;
+            self.task_count += 1;
         }
 
+        self.tx
+            .send(ScanMsg::new(
+                "task".to_string(),
+                self.task_count.to_string(),
+            ))
+            .await
+            .print_error();
         info!(
-            "扫描{}个文件,代码运行时间为{:?}秒",
-            self.file_count,
+            "<scan:{}> 创建{}个任务,代码运行时间为{:?}秒",
+            self.id,
+            self.task_count,
             (Instant::now() - start).as_secs()
         );
     }
 
-    pub fn run_async(mut self, directories: Vec<String>) {
-        tokio::spawn(async move { self.run(directories) });
+    pub async fn run_scanner(&mut self) {
+        let start = Instant::now();
+
+        let mut session = Session::new("./db/main.db");
+        session.connect().await;
+        if let Some(task_list) = session
+            .select_as::<Task>("SELECT * FROM task WHERE status = 0")
+            .await
+            .print_error()
+        {
+            let mut handles = Vec::new();
+            for task in task_list.iter() {
+                for scanner in self.scanners.iter() {
+                    if let Some(task) = scanner.scan(Path::new(&task.file_path), self.tx.clone()) {
+                        handles.push(task);
+                    }
+                }
+            }
+            self.task_count = handles.len();
+            for handle in handles {
+                handle.await.print_error();
+            }
+
+            self.tx
+                .send(ScanMsg::new(
+                    "done".to_string(),
+                    self.task_count.to_string(),
+                ))
+                .await
+                .print_error();
+            info!(
+                "<scan:{}> 执行{}个任务,代码运行时间为{:?}秒",
+                self.id,
+                self.task_count,
+                (Instant::now() - start).as_secs()
+            );
+        }
     }
 
-    pub fn monitor_async(&self, mut rx: Receiver<String>) {
+    pub fn run_async(mut self, directories: Vec<String>) {
+        tokio::spawn(async move { self.run(directories).await });
+    }
+
+    pub fn monitor_async(&self, mut rx: Receiver<ScanMsg>) {
+        let id = self.id.clone();
         tokio::spawn(async move {
-            while let Some(msg) = rx.recv().await {
-                debug!("{}", msg);
+            loop {
+                if let Some(msg) = rx.recv().await {
+                    debug!("{} -> {}", msg.r#type, msg.data);
+                    if msg.r#type == "done" {
+                        break;
+                    }
+                }
             }
+            info!("<scan:{}> 扫描结束", id);
         });
     }
 }
