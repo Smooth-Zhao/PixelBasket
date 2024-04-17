@@ -217,4 +217,28 @@ impl MetadataVO {
             duration: metadata.duration,
         }
     }
+
+    pub fn empty() -> Self {
+        Self {
+            id: "-1".to_string(),
+            file_path: String::new(),
+            file_name: String::new(),
+            file_size: 0,
+            file_suffix: String::new(),
+            added: String::new(),
+            created: String::new(),
+            modified: String::new(),
+            tags: String::new(),
+            exegesis: String::new(),
+            score: 0.0,
+            is_del: 0,
+            sha1: String::new(),
+            image_width: 0,
+            image_height: 0,
+            thumbnail: String::new(),
+            colors: String::new(),
+            shape: String::new(),
+            duration: 0,
+        }
+    }
 }
