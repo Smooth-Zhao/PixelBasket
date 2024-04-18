@@ -146,8 +146,10 @@ impl ScanJob {
                 let is_success = status.success().await;
                 if is_success {
                     self.scan_count += 1;
+                    let sql = format!("DELETE FROM task WHERE id = {}", id);
+                    session.execute(&sql).await.print_error();
+                    debug!("<scan:{}> 执行任务<id:{}>完成", self.id, id);
                 }
-                debug!("<scan:{}> task_id:{},return:{}", self.id, id, is_success);
             }
 
             self.tx
