@@ -141,24 +141,28 @@ impl ScanJob {
                     handles.push(scanner.scan(task));
                 }
             }
-            self.task_count = handles.len();
             for status in handles {
                 let id = status.id;
                 let is_success = status.success().await;
-                debug!("<scan:{}> task_id:{},return:{}", self.id, id, is_success);
+                if is_success {
+                    self.scan_count += 1;
+                    let sql = format!("DELETE FROM task WHERE id = {}", id);
+                    session.execute(&sql).await.print_error();
+                    debug!("<scan:{}> 执行任务<id:{}>完成", self.id, id);
+                }
             }
 
             self.tx
                 .send(ScanMsg::new(
                     "done".to_string(),
-                    self.task_count.to_string(),
+                    self.scan_count.to_string(),
                 ))
                 .await
                 .print_error();
             info!(
                 "<scan:{}> 执行{}个任务,代码运行时间为{:?}秒",
                 self.id,
-                self.task_count,
+                self.scan_count,
                 (Instant::now() - start).as_secs()
             );
         }
