@@ -124,8 +124,9 @@ impl Metadata {
                 .await
             {
                 if result.count == 0 {
-                    let _ = query("INSERT INTO metadata (id, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                    let _ = query("INSERT INTO metadata (id, full_path, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                         .bind(id::<i64>())
+                        .bind(&self.full_path)
                         .bind(&self.file_name)
                         .bind(&self.file_path)
                         .bind(&self.file_size)
@@ -190,6 +191,7 @@ fn sha1<P: AsRef<Path>>(path: P) -> Result<String, IoError> {
 #[serde(rename_all = "camelCase")]
 pub struct MetadataVO {
     pub id: String,
+    pub full_path: String,
     pub file_path: String,
     pub file_name: String,
     pub file_size: i64,
@@ -214,6 +216,7 @@ impl MetadataVO {
     pub fn from(metadata: Metadata) -> Self {
         Self {
             id: metadata.id.to_string(),
+            full_path: metadata.full_path,
             file_path: metadata.file_path,
             file_name: metadata.file_name,
             file_size: metadata.file_size,
@@ -238,6 +241,7 @@ impl MetadataVO {
     pub fn empty() -> Self {
         Self {
             id: "-1".to_string(),
+            full_path: String::new(),
             file_path: String::new(),
             file_name: String::new(),
             file_size: 0,
