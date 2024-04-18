@@ -10,14 +10,14 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "tauri:preview": "tauri dev --no-watch --release"
+    "tauri:preview": "tauri dev --no-watch"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.3",
     "@vueuse/core": "^10.9.0",
     "animate.css": "^4.1.1",
+    "dcraw": "^1.0.3",
     "naive-ui": "^2.38.1",
-    "viewerjs": "^1.11.6",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"
   },

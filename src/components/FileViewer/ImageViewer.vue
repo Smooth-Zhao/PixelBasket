@@ -8,9 +8,11 @@ import {
 } from '@vicons/fluent'
 import {onMounted, ref, watch} from "vue";
 import {useElementBounding} from "@vueuse/core";
+import PBFile from "../../entities/PBFile.ts";
+import {convertFileSrc} from "@tauri-apps/api/tauri";
 
 const props = defineProps<{
-  src: string,
+  file: PBFile,
   controls?: boolean
 }>()
 const canvasRef = ref<HTMLCanvasElement>()
@@ -27,33 +29,12 @@ let ctx: CanvasRenderingContext2D | null = null
 
 const handleRotateImage = (number: number) => {
   angle.value = angle.value + number
-
-  let currentTime = +new Date()
-  let deltaTime = 0;
-
-  let currentAngle = 0
-  const speed = 720;
-
-  const rotateImage = () => {
-    if (Math.abs(currentAngle - number) >= 0) {
-      return
-    }
-    // 计算旋转角度
-    const rotateAngle = speed * deltaTime + currentAngle > number ? number - currentAngle : speed * deltaTime
-    const now = +new Date();
-    deltaTime = (now - currentTime) / 1000
-    ctx?.rotate(rotateAngle * Math.PI / 180)
-    requestAnimationFrame(rotateImage)
-    currentTime = now;
-    currentAngle += rotateAngle
-    drawImage()
-  }
-
-  rotateImage()
+  ctx?.rotate(number * Math.PI / 180)
+  drawImage()
 }
 const drawImage = () => {
   if (canvasRef.value && image) {
-    ctx?.clearRect(-canvasRef.value.width, -canvasRef.value.height, canvasRef.value.width * 2, canvasRef.value.height * 2)
+    ctx?.clearRect(-canvasRef.value.width * scale.value, -canvasRef.value.height * scale.value, canvasRef.value.width * 2 * scale.value, canvasRef.value.height * 2 * scale.value)
     ctx?.drawImage(
       image,
       -image.naturalWidth * scale.value / 2,
@@ -64,13 +45,13 @@ const drawImage = () => {
   }
 }
 
-watch(() => props.src, async () => {
+watch(() => props.file, async () => {
   await loadImage()
 })
 
 const loadImage = () => new Promise(resolve => {
   image = new Image()
-  image.src = props.src
+  image.src = convertFileSrc(props.file.filePath)
   image.onload = () => {
     // 重置画布旋转
     ctx?.setTransform(1, 0, 0, 1, 0, 0)
@@ -108,23 +89,23 @@ const handleWheel = (e: WheelEvent) => {
   drawImage()
 }
 let dragging = false
-let startPosition = [0,0]
-const handleMousemove = (e:MouseEvent) => {
-  if(!dragging) return
+let startPosition = [0, 0]
+const handleMousemove = (e: MouseEvent) => {
+  if (!dragging) return
 
   const deltaX = e.clientX - startPosition[0]
   const deltaY = e.clientY - startPosition[1]
 
   offset.value = [offset.value[0] + deltaX, offset.value[1] + deltaY]
 
-  startPosition = [e.clientX,e.clientY]
+  startPosition = [e.clientX, e.clientY]
 
   ctx?.translate(deltaX, deltaY)
   drawImage()
 }
-const handleMousedown = (e:MouseEvent) => {
+const handleMousedown = (e: MouseEvent) => {
   dragging = true
-  startPosition = [e.clientX,e.clientY]
+  startPosition = [e.clientX, e.clientY]
 
 }
 const handleMouseup = () => {
@@ -142,7 +123,6 @@ const handleMouseup = () => {
       @mousemove="handleMousemove"
     ></canvas>
     <div class="controls" v-if="controls">
-
       <n-button strong secondary circle @click="reset">
         <template #icon>
           <n-icon :size="24">

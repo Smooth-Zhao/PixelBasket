@@ -1,23 +1,26 @@
 <script setup lang="ts">
 import {computed} from "vue";
 import {convertFileSrc} from "@tauri-apps/api/tauri";
-import {VideoViewer,ImageViewer} from "../../FileViewer";
 import {getFileType} from "../../../utils";
+import PBFile from "../../../entities/PBFile.ts";
+import VideoPreview from "./VideoPreview.vue";
 
 const props = defineProps<{
-  src: string,
+  file: PBFile,
   controls?:boolean
   showFileType?: boolean
 }>()
 
-const assetSrc = computed(() => convertFileSrc(props.src))
+const assetSrc = computed(() => {
+  return convertFileSrc(props.file.filePath)
+})
 
 const suffixName = computed(() => {
-  return props.src?.split('.').pop()?.toUpperCase();
+  return props.file.fileSuffix.toUpperCase();
 })
 
 const fileType = computed(() => {
-  if (!suffixName.value) return;
+  if (!suffixName.value) return "other";
   return getFileType(suffixName.value)
 })
 
@@ -25,8 +28,8 @@ const fileType = computed(() => {
 
 <template>
   <div class="file-preview">
-    <img v-if="fileType === 'image'" :src="assetSrc" alt="">
-    <video-viewer v-else-if="fileType === 'video'" :src="assetSrc"/>
+    <img v-if=" ['image','raw'].includes(fileType)" :src="props.file.thumbnail" alt="">
+    <video-preview v-else-if="fileType === 'video'" :controls="controls" :thumbnail="file.thumbnail" :src="assetSrc"/>
     <span v-else>
       Unsupported File Type
     </span>
@@ -66,6 +69,10 @@ const fileType = computed(() => {
 
     &.video {
       background: rgba(70, 172, 255);
+    }
+
+    &.raw {
+      background: rgb(181, 19, 199);
     }
   }
 }

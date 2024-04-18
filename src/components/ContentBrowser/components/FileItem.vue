@@ -5,9 +5,10 @@ import {useElementVisibility} from "@vueuse/core";
 import {ref} from "vue";
 import FilePreview from "./FilePreview.vue";
 import useSelection from "../../../hooks/useSelection.ts";
+import PBFile from "../../../entities/PBFile.ts";
 
 const props = defineProps<{
-  src: string
+  file: PBFile
 }>()
 const el = ref()
 const {trigger} = useFileContextMenu()
@@ -16,7 +17,7 @@ const visibility = useElementVisibility(el)
 const {items} = useSelection()
 const handleMouse = (e:MouseEvent) => {
   items.value.clear()
-  items.value.add(props.src)
+  items.value.add(props.file)
   trigger(e)
 }
 </script>
@@ -24,14 +25,13 @@ const handleMouse = (e:MouseEvent) => {
 <template>
   <div class="file-item" @contextmenu.stop.prevent="handleMouse" ref="el">
     <div class="cover">
-      <file-preview show-file-type v-if="visibility" :src="src"/>
+      <file-preview controls show-file-type v-if="visibility" :file="file"/>
     </div>
     <div class="info">
       <n-ellipsis style="max-width:100%">
-        {{src}}
-<!--        {{ decodeURIComponent(src).substring(decodeURIComponent(src).lastIndexOf("\\") + 1) }}-->
+        {{file.fileName}}
       </n-ellipsis>
-      <span class="resolution">4096 * 1080</span>
+      <span class="resolution">{{file.imageWidth}} * {{ file.imageHeight}}</span>
     </div>
   </div>
 </template>

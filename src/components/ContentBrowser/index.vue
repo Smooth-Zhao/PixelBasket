@@ -4,33 +4,34 @@ import {NScrollbar} from "naive-ui"
 import FileItem from "./components/FileItem.vue";
 import useSelection from "../../hooks/useSelection.ts";
 import useContentBrowser from "../../hooks/useContentBrowser.ts";
+import PBFile from "../../entities/PBFile.ts";
 
 const columnNumber = ref(4)
 
 const {items: selectItems} = useSelection()
-const {files,loadLocalStorage} = useContentBrowser()
+const {files,load} = useContentBrowser()
 
-const handleSelect = (e: PointerEvent, src: string) => {
+const handleSelect = (e: PointerEvent, file: PBFile) => {
   if (e.shiftKey) {
-    selectFile(src, true)
+    selectFile(file, true)
   } else if (e.ctrlKey) {
-    selectFile(src)
+    selectFile(file)
   } else {
     selectItems.value.clear()
-    selectFile(src)
+    selectFile(file)
   }
 }
 
 const selectFile = (current: any, addition = false) => {
   if (addition) {
     const arr = Array.from(selectItems.value)
-    const firstIndex = files.value.findIndex(v=>v.src === arr.at(0));
-    const currentIndex = files.value.findIndex(v=>v.src === current);
+    const firstIndex = files.value.findIndex(v=>v === arr.at(0));
+    const currentIndex = files.value.findIndex(v=>v === current);
     selectItems.value.clear()
     files.value.slice(
       Math.min(firstIndex, currentIndex),
       Math.max(firstIndex, currentIndex) + 1
-    ).forEach(v => selectItems.value.add(v.src))
+    ).forEach(v => selectItems.value.add(v))
   } else {
     selectItems.value.add(current)
   }
@@ -68,7 +69,7 @@ const handleArrowKey = (key: string) => {
   }
 }
 onMounted(() => {
-  loadLocalStorage()
+  load()
   document.removeEventListener("keyup", handleKeyUp)
   document.addEventListener("keyup", handleKeyUp)
 })
@@ -83,9 +84,9 @@ onUnmounted(() => {
     <div class="content-browser" @click="handleSelectNone" @keydown="handleKeyUp">
       <file-item
         v-for="item in files"
-        :src="item.src"
-        :class="{ 'selected': selectItems.has(item.src) }"
-        @click.stop="handleSelect($event,item.src)"
+        :file="item"
+        :class="{ 'selected': selectItems.has(item) }"
+        @click.stop="handleSelect($event,item)"
       />
     </div>
   </n-scrollbar>

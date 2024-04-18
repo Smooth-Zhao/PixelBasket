@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import useSelection from "../hooks/useSelection.ts";
-import {NScrollbar,NTooltip,useMessage,NInput,NSpace,NSelect,NRate} from "naive-ui";
+import {NScrollbar, NTooltip, useMessage, NInput, NSpace, NSelect, NRate} from "naive-ui";
 import FilePreview from "./ContentBrowser/components/FilePreview.vue";
 import {computed} from "vue";
-import useContentBrowser from "../hooks/useContentBrowser.ts";
+import PBFile from "../entities/PBFile.ts";
+import {bytesToSize} from "../utils";
 
 const {items} = useSelection()
 const message = useMessage()
-const handleColorItemClick = (color:string) => {
+const handleColorItemClick = (color: string) => {
   //复制到剪贴板
   navigator.clipboard.writeText(color)
     .then(() => {
@@ -17,37 +18,32 @@ const handleColorItemClick = (color:string) => {
       message.error('复制失败')
     })
 }
-const previewSrc = computed(()=>{
+const file = computed<PBFile>(() => {
   return Array.from(items.value).at(-1)
 })
-const {readDirectory} = useContentBrowser();
+const colors = computed(() => {
+  return file.value?.colors.split(",").slice(1,7)
+})
 </script>
 
 <template>
-  <n-scrollbar>
+  <n-scrollbar v-if="file">
     <div class="file-attribute">
       <div class="preview-image">
-        <file-preview v-if="previewSrc" :src="previewSrc"/>
+        <file-preview v-if="file" :file="file"/>
       </div>
       <div class="main-colors">
-        <n-tooltip trigger="hover">
+        <n-tooltip trigger="hover" v-for="item in colors">
           <template #trigger>
-            <span style="--item-color:#c44343" @click="handleColorItemClick('#c44343')"></span>
+            <span :style="{'--item-color':item}" @click="handleColorItemClick(item)"></span>
           </template>
-          #c44343
+          {{ item }}
         </n-tooltip>
-
-        <span style="--item-color:#0effc3"></span>
-        <span @click="readDirectory" style="--item-color:#9916bb"></span>
-        <span style="--item-color:#52a275"></span>
-        <span style="--item-color:#472abd"></span>
-        <span style="--item-color:#4da1dc"></span>
-        <span style="--item-color:#4da1dc"></span>
       </div>
       <n-space class="file-attribute-edit" vertical>
         <div class="file-name-input">
           <label>文件名：</label>
-          <n-input />
+          <n-input v-model:value="file.fileName" placeholder=""/>
         </div>
         <div class="file-name-input">
           <label>标签：</label>
@@ -65,23 +61,23 @@ const {readDirectory} = useContentBrowser();
       <div class="details">
         <div class="detail-item">
           <span>评分</span>
-          <span> <n-rate :size="12" /></span>
+          <span> <n-rate v-model:value="file.score" :size="12"/></span>
         </div>
         <div class="detail-item">
           <span>文件大小</span>
-          <span>10kb</span>
+          <span>{{ bytesToSize(file.fileSize) }}</span>
         </div>
         <div class="detail-item">
           <span>尺寸</span>
-          <span>1204 × 1358</span>
+          <span>{{ file.imageWidth }} * {{ file.imageHeight }}</span>
         </div>
         <div class="detail-item">
           <span>格式</span>
-          <span>JPG</span>
+          <span>{{ file.fileSuffix }}</span>
         </div>
         <div class="detail-item">
           <span>创建日期</span>
-          <span>2024-4-10 16:30:11</span>
+          <span>{{ file.created }}</span>
         </div>
       </div>
     </div>
@@ -89,24 +85,28 @@ const {readDirectory} = useContentBrowser();
 </template>
 
 <style scoped lang="scss">
-.file-attribute{
+.file-attribute {
   height: 100%;
   padding: 56px 16px 16px;
-  .preview-image{
+
+  .preview-image {
     width: 100%;
     height: 160px;
     margin-bottom: 8px;
-    img{
+
+    img {
       width: 100%;
       height: 100%;
       display: block;
       object-fit: contain;
     }
   }
-  .main-colors{
+
+  .main-colors {
     display: flex;
     gap: 2px;
-    span{
+
+    span {
       display: block;
       flex: 1 1 auto;
       height: 10px;
@@ -114,24 +114,30 @@ const {readDirectory} = useContentBrowser();
       cursor: pointer;
     }
   }
-  .file-attribute-edit{
+
+  .file-attribute-edit {
     margin-top: 16px;
   }
-  .details{
+
+  .details {
     margin-top: 36px;
-    padding: 8px;
-    .detail-item{
+    padding: 4px;
+
+    .detail-item {
       display: flex;
-      font-size: 12px;
-      span{
+      font-size: 14px;
+
+      span {
         width: 0;
       }
-      span:nth-child(1){
+
+      span:nth-child(1) {
         flex: 2 2 auto;
       }
-      span:nth-child(2){
+
+      span:nth-child(2) {
         flex: 3 3 auto;
-        color:var(--color-gray-2);
+        color: var(--color-gray-2);
       }
     }
   }

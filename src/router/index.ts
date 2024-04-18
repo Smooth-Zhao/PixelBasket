@@ -8,9 +8,9 @@ const router = createRouter({
     component:()=>import("../windows/Main.vue")
   },{
     name:"file",
-    path:"/file/:src",
+    path:"/file/:id",
     component:()=>import("../windows/File.vue"),
-    props:(route)=>({src:route.params.src})
+    props:(route)=>({id:route.params.id})
   }]
 })
 export default router

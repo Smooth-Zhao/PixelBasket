@@ -12,15 +12,14 @@ const useFileContextMenu = () => {
           label: "打开",
           shortcut: "F5",
           handler() {
-            const file = encodeURIComponent(Array.from(selection.items.value)[0] as string);
+            const file = Array.from(selection.items.value)[0];
             const fileWindow = WebviewWindow.getByLabel("file")
-            console.log(fileWindow)
             if (fileWindow) {
-              fileWindow.emit("update_file", {file})
+              fileWindow.emit("update_file", {id: file.id})
             } else {
               const webview = new WebviewWindow("file", {
-                url: `/file/${file}`,
-                decorations:false,
+                url: `/file/${file.id}`,
+                decorations: false,
                 title: "查看文件",
                 visible: false
               });
