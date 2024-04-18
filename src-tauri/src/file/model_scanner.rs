@@ -1,11 +1,8 @@
 use std::path::Path;
 
-use tokio::sync::mpsc::Sender;
-use tokio::task::JoinHandle;
-
 use crate::file::metadata::Metadata;
-use crate::file::scan::{ScanMsg, Scanner};
-use crate::util::error::ErrorHandle;
+use crate::file::scan::Scanner;
+use crate::file::task::{Task, TaskStatus};
 
 pub struct ModelScanner {}
 
@@ -23,19 +20,20 @@ impl Scanner for ModelScanner {
         }
     }
 
-    fn scan(&self, path: &Path, tx: Sender<ScanMsg>) -> Option<JoinHandle<()>> {
-        let mut metadata = Metadata::load(path);
-        let path = path.to_path_buf();
-        if self.is_support(metadata.file_suffix.as_str()) {
-            return Some(tokio::spawn(async move {
-                if metadata.analyze_metadata(&path).is_ok() {
+    fn scan(&self, task: &Task) -> TaskStatus {
+        let mut status = TaskStatus::new(task.id);
+        if self.is_support(task.file_suffix.as_str()) {
+            let path = task.file_path.clone();
+            status.handle(tokio::spawn(async move {
+                let path = Path::new(path.as_str());
+                let mut metadata = Metadata::load(path);
+                if metadata.analyze_metadata(path).is_ok() {
                     metadata.save_to_db().await;
-                    tx.send(ScanMsg::new("path".to_string(), metadata.full_path))
-                        .await
-                        .print_error();
+                    return true;
                 };
+                false
             }));
         }
-        None
+        status
     }
 }

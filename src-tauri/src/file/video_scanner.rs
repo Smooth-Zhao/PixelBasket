@@ -1,15 +1,11 @@
-use image::{DynamicImage, GenericImageView, RgbImage};
 use std::path::Path;
 use std::process::Command;
 use base64::Engine;
 use base64::engine::general_purpose;
 
-use tokio::sync::mpsc::Sender;
-use tokio::task::JoinHandle;
-
 use crate::file::metadata::Metadata;
-use crate::file::scan::{ScanMsg, Scanner};
-use crate::util::error::ErrorHandle;
+use crate::file::scan::{Scanner};
+use crate::file::task::{Task, TaskStatus};
 use crate::Result;
 
 pub struct VideoScanner {}
@@ -28,20 +24,23 @@ impl Scanner for VideoScanner {
         }
     }
 
-    fn scan(&self, path: &Path, tx: Sender<ScanMsg>) -> Option<JoinHandle<()>> {
-        let mut metadata = Metadata::load(path);
-        let path = path.to_path_buf();
-        if self.is_support(metadata.file_suffix.as_str()) {
-            return Some(tokio::spawn(async move {
-                if metadata.analyze_metadata(&path).is_ok() {
-                    metadata.save_to_db().await;
-                    tx.send(ScanMsg::new("path".to_string(), metadata.full_path))
-                        .await
-                        .print_error();
+    fn scan(&self,task: &Task) -> TaskStatus {
+        let mut status = TaskStatus::new(task.id);
+        if self.is_support(task.file_suffix.as_str()) {
+            let path = task.file_path.clone();
+            status.handle(tokio::spawn(async move {
+                let path = Path::new(path.as_str());
+                let mut metadata = Metadata::load(path);
+                if metadata.analyze_metadata(path).is_ok() {
+                    if analyze_video_metadata(path, &mut metadata).is_ok() {
+                        metadata.save_to_db().await;
+                        return true;
+                    };
                 };
+                false
             }));
         }
-        None
+        status
     }
 }
 fn analyze_video_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {

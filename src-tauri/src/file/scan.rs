@@ -2,18 +2,17 @@ use std::path::{Path, PathBuf};
 use std::time::Instant;
 
 use tokio::sync::mpsc::{Receiver, Sender};
-use tokio::task::JoinHandle;
 
 use crate::db::sqlite::Session;
 use crate::file::metadata::Metadata;
-use crate::file::task::Task;
+use crate::file::task::{Task, TaskStatus};
 use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id_str;
 use crate::{debug, info, Result};
 
 pub trait Scanner {
     fn is_support(&self, suffix: &str) -> bool;
-    fn scan(&self, path: &Path, tx: Sender<ScanMsg>) -> Option<JoinHandle<()>>;
+    fn scan(&self, task: &Task) -> TaskStatus;
 }
 
 pub struct ScanMsg {
@@ -139,14 +138,14 @@ impl ScanJob {
             let mut handles = Vec::new();
             for task in task_list.iter() {
                 for scanner in self.scanners.iter() {
-                    if let Some(task) = scanner.scan(Path::new(&task.file_path), self.tx.clone()) {
-                        handles.push(task);
-                    }
+                    handles.push(scanner.scan(task));
                 }
             }
             self.task_count = handles.len();
-            for handle in handles {
-                handle.await.print_error();
+            for status in handles {
+                let id = status.id;
+                let is_success = status.success().await;
+                debug!("<scan:{}> task_id:{},return:{}", self.id, id, is_success);
             }
 
             self.tx

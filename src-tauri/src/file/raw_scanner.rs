@@ -1,18 +1,11 @@
-use std::io::Cursor;
 use std::path::Path;
 use std::process::Command;
 
-use base64::{Engine as _, engine::general_purpose};
-use image::{DynamicImage, GenericImageView, ImageFormat, RgbImage};
-use kmeans_colors::{Calculate, CentroidData, get_kmeans_hamerly, Sort};
-use palette::{FromColor, IntoColor, Srgb};
-use palette::cast::ComponentsAs;
-use tokio::sync::mpsc::Sender;
 
 use crate::file::metadata::Metadata;
-use crate::file::scan::Scanner;
-use crate::{debug, Result};
-use crate::util::error::ErrorHandle;
+use crate::file::scan::{Scanner};
+use crate::{Result};
+use crate::file::task::{Task, TaskStatus};
 
 pub struct RawScanner {}
 
@@ -30,24 +23,23 @@ impl Scanner for RawScanner {
         }
     }
 
-    fn scan(
-        &self,
-        path: &Path,
-        tx: Sender<String>
-    ) -> Result<()> {
-        let mut metadata = Metadata::load(path);
-        let path = path.to_path_buf();
-        if self.is_support(metadata.file_suffix.as_str()) {
-            tokio::spawn(async move {
-                if metadata.analyze_metadata(&path).is_ok() {
-                    if analyze_raw_metadata(&path, &mut metadata).is_ok() {
+    fn scan(&self, task: &Task) -> TaskStatus {
+        let mut status = TaskStatus::new(task.id);
+        if self.is_support(task.file_suffix.as_str()) {
+            let path = task.file_path.clone();
+            status.handle(tokio::spawn(async move {
+                let path = Path::new(path.as_str());
+                let mut metadata = Metadata::load(path);
+                if metadata.analyze_metadata(path).is_ok() {
+                    if analyze_raw_metadata(path, &mut metadata).is_ok() {
                         metadata.save_to_db().await;
-                        tx.send(metadata.file_path).await.print_error();
+                        return true;
                     };
                 };
-            });
+                false
+            }));
         }
-        Ok(())
+        status
     }
 }
 

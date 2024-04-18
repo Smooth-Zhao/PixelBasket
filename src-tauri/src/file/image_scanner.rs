@@ -6,11 +6,10 @@ use image::{DynamicImage, GenericImageView, ImageFormat, RgbImage};
 use kmeans_colors::{get_kmeans_hamerly, Calculate, CentroidData, Sort};
 use palette::cast::ComponentsAs;
 use palette::{FromColor, IntoColor, Srgb};
-use tokio::sync::mpsc::Sender;
-use tokio::task::JoinHandle;
 
 use crate::file::metadata::Metadata;
-use crate::file::scan::{ScanMsg, Scanner};
+use crate::file::scan::Scanner;
+use crate::file::task::{Task, TaskStatus};
 use crate::util::error::ErrorHandle;
 use crate::Result;
 
@@ -31,22 +30,23 @@ impl Scanner for ImageScanner {
         }
     }
 
-    fn scan(&self, path: &Path, tx: Sender<ScanMsg>) -> Option<JoinHandle<()>> {
-        let mut metadata = Metadata::load(path);
-        let path = path.to_path_buf();
-        if self.is_support(metadata.file_suffix.as_str()) {
-            return Some(tokio::spawn(async move {
-                if metadata.analyze_metadata(&path).is_ok() {
-                    if analyze_image_metadata(&path, &mut metadata).is_ok() {
+    fn scan(&self, task: &Task) -> TaskStatus {
+        let mut status = TaskStatus::new(task.id);
+        if self.is_support(task.file_suffix.as_str()) {
+            let path = task.file_path.clone();
+            status.handle(tokio::spawn(async move {
+                let path = Path::new(path.as_str());
+                let mut metadata = Metadata::load(path);
+                if metadata.analyze_metadata(path).is_ok() {
+                    if analyze_image_metadata(path, &mut metadata).is_ok() {
                         metadata.save_to_db().await;
-                        tx.send(ScanMsg::new("path".to_string(), metadata.full_path))
-                            .await
-                            .print_error();
+                        return true;
                     };
                 };
+                false
             }));
         }
-        None
+        status
     }
 }
 
@@ -56,7 +56,11 @@ fn analyze_image_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     let dimensions = image.dimensions();
     metadata.image_width = dimensions.0;
     metadata.image_height = dimensions.1;
-    let resize_image = thumbnail(&image, metadata.image_width, metadata.image_height);
+    let resize_image = if metadata.image_width > 200 {
+        thumbnail(&image, metadata.image_width, metadata.image_height)
+    } else {
+        image.to_rgb8()
+    };
     if let Some(base64) = image_to_base64(&resize_image) {
         metadata.thumbnail = base64;
     }

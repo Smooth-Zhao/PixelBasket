@@ -8,7 +8,7 @@ use crate::file::image_scanner::ImageScanner;
 use crate::file::metadata::{Metadata, MetadataVO};
 use crate::file::model_scanner::ModelScanner;
 use crate::file::raw_scanner::RawScanner;
-use crate::file::scan::{ScanJob};
+use crate::file::scan::{ScanJob, ScanMsg};
 use crate::file::video_scanner::VideoScanner;
 use crate::util::error::ErrorHandle;
 
@@ -20,7 +20,7 @@ pub struct Basket {
 
 #[tauri::command]
 pub fn create_basket(basket: Basket, _app_handle: tauri::AppHandle) -> &'static str {
-    let (tx, rx) = channel::<String>(16);
+    let (tx, rx) = channel::<ScanMsg>(16);
     let mut scan = ScanJob::new(tx);
     scan.add_scanners(vec![
         ImageScanner::wrap(),
