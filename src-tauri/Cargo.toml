@@ -28,8 +28,8 @@ snowflaked = { version = "1.0.3", features = ["sync"] }
 file-hashing = "0.1.2"
 sha1 = "0.10.6"
 rawloader = "0.37.1"
+regex = "1.10.4"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
-

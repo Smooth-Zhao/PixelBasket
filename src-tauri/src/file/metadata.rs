@@ -1,18 +1,23 @@
 use std::error::Error;
 use std::io::Error as IoError;
+use std::ops::Add;
 use std::path::Path;
 
-use crate::db::sqlite::Session;
-use crate::util::snowflake::id;
 use chrono::{DateTime, Local};
 use file_hashing::get_hash_file;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
 use sqlx::query;
 
+use crate::db::sqlite::Session;
+use crate::util::error::ErrorHandle;
+use crate::util::snowflake::id;
+
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct Metadata {
     pub id: i64,
+    pub full_path: String,
     pub file_path: String,
     pub file_name: String,
     pub file_size: i64,
@@ -39,6 +44,7 @@ impl Metadata {
     pub fn empty() -> Self {
         Metadata {
             id: -1,
+            full_path: String::new(),
             file_path: String::new(),
             file_name: String::new(),
             file_size: 0,
@@ -64,12 +70,28 @@ impl Metadata {
 
     pub fn load(path: &Path) -> Self {
         let mut metadata = Self::empty();
-        if let Some(file_path) = path.to_str() {
-            metadata.file_path = file_path.to_string();
-        }
+        let mut suffix = String::new();
         if let Some(extension) = path.extension() {
             if let Some(file_suffix) = extension.to_str() {
+                suffix = ".".to_string().add(file_suffix);
                 metadata.file_suffix = file_suffix.to_lowercase();
+            }
+        }
+        let mut name = String::new();
+        if let Some(file_name) = path.file_name() {
+            if let Some(file_name) = file_name.to_str() {
+                name = file_name.to_string();
+                let re = format!("{}$", suffix);
+                if let Some(re) = Regex::new(re.as_str()).print_error() {
+                    metadata.file_name = re.replace(file_name, "".to_string()).to_string();
+                }
+            }
+        }
+        if let Some(file_path) = path.to_str() {
+            metadata.full_path = file_path.to_string();
+            let re = format!("{}$", name);
+            if let Some(re) = Regex::new(re.as_str()).print_error() {
+                metadata.file_path = re.replace(file_path, "".to_string()).to_string();
             }
         }
         metadata
@@ -77,11 +99,6 @@ impl Metadata {
 
     /// 解析文件元数据
     pub fn analyze_metadata(&mut self, path: &Path) -> Result<(), Box<dyn Error>> {
-        if let Some(file_name) = path.file_name() {
-            if let Some(file_name) = file_name.to_str() {
-                self.file_name = file_name.to_string();
-            }
-        }
         let file_metadata = path.metadata()?;
         self.file_size = file_metadata.len() as i64;
         let datetime: DateTime<Local> = file_metadata.created()?.into();
@@ -142,7 +159,7 @@ impl Metadata {
                 .count(
                     format!(
                         "SELECT COUNT(*) AS count FROM task WHERE file_path = '{}'",
-                        &self.file_path
+                        &self.full_path
                     )
                     .as_str(),
                 )
@@ -153,7 +170,7 @@ impl Metadata {
                         "INSERT INTO task (id, file_path, file_suffix, status) VALUES (?, ?, ?, ?)",
                     )
                     .bind(id::<i64>())
-                    .bind(&self.file_path)
+                    .bind(&self.full_path)
                     .bind(&self.file_suffix)
                     .bind(0)
                     .execute(pool)

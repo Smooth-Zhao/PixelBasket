@@ -5,9 +5,10 @@ use base64::Engine;
 use base64::engine::general_purpose;
 
 use tokio::sync::mpsc::Sender;
+use tokio::task::JoinHandle;
 
 use crate::file::metadata::Metadata;
-use crate::file::scan::Scanner;
+use crate::file::scan::{ScanMsg, Scanner};
 use crate::util::error::ErrorHandle;
 use crate::Result;
 
@@ -27,20 +28,20 @@ impl Scanner for VideoScanner {
         }
     }
 
-    fn scan(&self, path: &Path, tx: Sender<String>) -> Result<()> {
+    fn scan(&self, path: &Path, tx: Sender<ScanMsg>) -> Option<JoinHandle<()>> {
         let mut metadata = Metadata::load(path);
         let path = path.to_path_buf();
         if self.is_support(metadata.file_suffix.as_str()) {
-            tokio::spawn(async move {
+            return Some(tokio::spawn(async move {
                 if metadata.analyze_metadata(&path).is_ok() {
-                    if analyze_video_metadata(&path, &mut metadata).is_ok() {
-                        metadata.save_to_db().await;
-                        tx.send(metadata.file_path).await.print_error();
-                    };
+                    metadata.save_to_db().await;
+                    tx.send(ScanMsg::new("path".to_string(), metadata.full_path))
+                        .await
+                        .print_error();
                 };
-            });
+            }));
         }
-        Ok(())
+        None
     }
 }
 fn analyze_video_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
@@ -100,22 +101,22 @@ fn thumbnail(path: &Path) -> Result<String> {
     Ok(format!("data:image/jpg;base64,{}", base64))
 }
 // fn duration(path: &Path) -> Result<f64> {
-// 
+//
 //     // 定义 ffprobe 命令
 //     let output = Command::new("ffprobe")
 //         .args(&["-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", path.to_str().unwrap()])
 //         .output()?;
-// 
+//
 //     // 检查命令执行是否成功
 //     if !output.status.success() {
 //         return Err("Failed to execute ffprobe command".into());
 //     }
-// 
+//
 //     // 将输出转换为字符串并解析为时长
 //     let duration_str = str::?;
 //     let duration: f64 = duration_str.trim().parse()?;
-// 
+//
 //     println!("Video duration: {} seconds", duration);
-// 
+//
 //     Ok(duration)
 // }
