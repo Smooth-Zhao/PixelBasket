@@ -12,6 +12,7 @@ pub mod metadata;
 pub mod model_scanner;
 pub mod scan;
 pub mod video_scanner;
+pub mod raw_scanner;
 
 #[derive(Serialize, Deserialize)]
 pub struct Directory {
