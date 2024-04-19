@@ -70,14 +70,14 @@ fn analyze_image_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
 }
 
 /// 生成图片缩咯图
-fn thumbnail(image: &DynamicImage, w: u32, h: u32) -> RgbImage {
+pub fn thumbnail(image: &DynamicImage, w: u32, h: u32) -> RgbImage {
     let w1 = 200;
     let h1 = (200f32 / w as f32 * h as f32) as u32;
     image.thumbnail(w1, h1).to_rgb8()
 }
 
 /// 生成base64图片
-fn image_to_base64(image: &RgbImage) -> Option<String> {
+pub fn image_to_base64(image: &RgbImage) -> Option<String> {
     let mut buffer = Vec::new();
     image
         .write_to(&mut Cursor::new(&mut buffer), ImageFormat::Jpeg)

@@ -124,7 +124,7 @@ impl Metadata {
                 .await
             {
                 if result.count == 0 {
-                    let _ = query("INSERT INTO metadata (id, full_path, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+                    let _ = query("INSERT INTO metadata (id, full_path, file_name, file_path, file_size, file_suffix, added, created, modified, image_width, image_height, thumbnail, tags, exegesis, score, colors, shape, duration, is_del, sha1) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
                         .bind(id::<i64>())
                         .bind(&self.full_path)
                         .bind(&self.file_name)
@@ -149,6 +149,8 @@ impl Metadata {
                         .await;
                 }
             }
+        }else{
+            println!("save to db fail");
         }
     }
 

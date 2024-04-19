@@ -7,6 +7,7 @@ use crate::db::sqlite::Session;
 use crate::file::image_scanner::ImageScanner;
 use crate::file::metadata::{Metadata, MetadataVO};
 use crate::file::model_scanner::ModelScanner;
+use crate::file::psd_scanner::PsdScanner;
 use crate::file::raw_scanner::RawScanner;
 use crate::file::scan::{ScanJob, ScanMsg};
 use crate::file::video_scanner::VideoScanner;
@@ -27,6 +28,7 @@ pub fn create_basket(basket: Basket, _app_handle: tauri::AppHandle) -> &'static 
         ModelScanner::wrap(),
         VideoScanner::wrap(),
         RawScanner::wrap(),
+        PsdScanner::wrap(),
     ]);
     scan.monitor_async(rx);
     scan.run_async(basket.directories);
