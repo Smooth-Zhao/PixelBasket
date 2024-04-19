@@ -20,13 +20,13 @@ export const throttle = <T extends (...args: any) => any>(func: T, wait: number)
   } as T
 }
 
-export type FileType = "image" | "video" | "audio" | "raw" | "other"
+export type FileType = "image" | "encoded_image" | "video" | "audio" | "psd" | "other"
 export const getFileType = (filename: string):FileType => {
   if (['AVIF', 'BMP', 'DDS', 'FARBFELD', 'GIF', 'HDR', 'ICO', 'JPG', 'JPEG', 'EXR', 'PNG', 'PNM', 'QOI', 'TGA', 'TIFF', 'WEBP'].includes(filename)) {
     return "image"
-  } else if (["NEF"].includes(filename)) {
-    return "raw"
-  } else if (["MP4","MOV"].includes(filename)) {
+  } else if (["NEF","PSD"].includes(filename)) {
+    return "encoded_image"
+  }else if (["MP4","MOV"].includes(filename)) {
     return "video"
   }
   return "other"

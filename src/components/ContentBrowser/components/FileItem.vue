@@ -15,7 +15,7 @@ const {trigger} = useFileContextMenu()
 const visibility = useElementVisibility(el)
 
 const {items} = useSelection()
-const handleMouse = (e:MouseEvent) => {
+const handleMouse = (e: MouseEvent) => {
   items.value.clear()
   items.value.add(props.file)
   trigger(e)
@@ -29,9 +29,9 @@ const handleMouse = (e:MouseEvent) => {
     </div>
     <div class="info">
       <n-ellipsis style="max-width:100%">
-        {{file.fileName}}
+        {{ file.fileName }}.{{ file.fileSuffix }}
       </n-ellipsis>
-      <span class="resolution">{{file.imageWidth}} * {{ file.imageHeight}}</span>
+      <span class="resolution">{{ file.imageWidth }} * {{ file.imageHeight }}</span>
     </div>
   </div>
 </template>

@@ -12,7 +12,7 @@ const props = defineProps<{
 }>()
 
 const assetSrc = computed(() => {
-  return convertFileSrc(props.file.filePath)
+  return convertFileSrc(props.file.fullPath)
 })
 
 const suffixName = computed(() => {
@@ -28,13 +28,13 @@ const fileType = computed(() => {
 
 <template>
   <div class="file-preview">
-    <img v-if=" ['image','raw'].includes(fileType)" :src="props.file.thumbnail" alt="">
+    <img v-if=" ['image','encoded_image'].includes(fileType)" :src="props.file.thumbnail" alt="">
     <video-preview v-else-if="fileType === 'video'" :controls="controls" :thumbnail="file.thumbnail" :src="assetSrc"/>
     <span v-else>
       Unsupported File Type
     </span>
 
-    <div v-if="fileType!== 'other' && showFileType" class="file-type-tag" :class="fileType">{{ suffixName }}</div>
+    <div v-if="fileType!== 'other' && showFileType" class="file-type-tag" :class="[fileType,file.fileSuffix]">{{ suffixName }}</div>
   </div>
 </template>
 
@@ -71,8 +71,11 @@ const fileType = computed(() => {
       background: rgba(70, 172, 255);
     }
 
-    &.raw {
+    &.encoded_image.raw {
       background: rgb(181, 19, 199);
+    }
+    &.encoded_image.psd {
+      background: rgb(0,30,54);
     }
   }
 }

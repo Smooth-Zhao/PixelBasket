@@ -12,6 +12,7 @@ async fn main() {
             basket::create_basket,
             basket::get_metadata,
             basket::del_metadata,
+            basket::get_metadata_by_id
         ])
         .run(tauri::generate_context!())
         .print_error();

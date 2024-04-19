@@ -51,7 +51,7 @@ watch(() => props.file, async () => {
 
 const loadImage = () => new Promise(resolve => {
   image = new Image()
-  image.src = convertFileSrc(props.file.filePath)
+  image.src = convertFileSrc(props.file.fullPath)
   image.onload = () => {
     // 重置画布旋转
     ctx?.setTransform(1, 0, 0, 1, 0, 0)

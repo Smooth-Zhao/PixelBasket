@@ -2,6 +2,7 @@ export default class PBFile {
   id = ""
   fileName = ""
   filePath = ""
+  fullPath = ""
   colors = ""
   fileSize = 0
   fileSuffix = ""

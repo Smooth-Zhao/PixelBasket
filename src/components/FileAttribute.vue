@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import useSelection from "../hooks/useSelection.ts";
-import {NScrollbar, NTooltip, useMessage, NInput, NSpace, NSelect, NRate} from "naive-ui";
+import {NScrollbar, NTooltip, useMessage, NInput, NSpace, NSelect, NRate, NEllipsis} from "naive-ui";
 import FilePreview from "./ContentBrowser/components/FilePreview.vue";
 import {computed} from "vue";
 import PBFile from "../entities/PBFile.ts";
@@ -22,7 +22,7 @@ const file = computed<PBFile>(() => {
   return Array.from(items.value).at(-1)
 })
 const colors = computed(() => {
-  return file.value?.colors.split(",").slice(1,7)
+  return file.value?.colors.split(",").slice(1, 7)
 })
 </script>
 
@@ -78,6 +78,14 @@ const colors = computed(() => {
         <div class="detail-item">
           <span>创建日期</span>
           <span>{{ file.created }}</span>
+        </div>
+        <div class="detail-item">
+          <span>文件路径</span>
+          <span>
+            <n-ellipsis :line-clamp="1" style="max-width: 100%">
+              {{ file.fullPath }}
+            </n-ellipsis>
+          </span>
         </div>
       </div>
     </div>
@@ -135,8 +143,9 @@ const colors = computed(() => {
         flex: 2 2 auto;
       }
 
-      span:nth-child(2) {
+      ::v-deep(span:nth-child(2)) {
         flex: 3 3 auto;
+        width: 0;
         color: var(--color-gray-2);
       }
     }
