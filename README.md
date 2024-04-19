@@ -1,7 +1,7 @@
 # Todo
 
 ### 后端
-- [ ] 扫描 `raw` 文件的 EXIF 信息
+- [ ] 扫描 `raw` 文件的 EXIF 信息，使用 `rawloader`
 - [ ] 构建 `ffmpeg` 源码
 - [ ] 对于 `psd` 和 `psb` 文件的支持
 - [ ] 打开资源管理器，支持跨平台
