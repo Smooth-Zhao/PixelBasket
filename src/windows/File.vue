@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import {onMounted, ref, watch} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {emit, listen} from "@tauri-apps/api/event";
 import {useRouter} from "vue-router";
 import FileWindowHeader from "../components/FileWindowHeader.vue";
 import {ImageViewer} from "../components/FileViewer";
 import PBFile from "../entities/PBFile.ts";
 import {invoke} from "@tauri-apps/api";
+import {getFileType} from "../utils";
 
 const props = defineProps<{
   id: string
@@ -28,7 +29,10 @@ onMounted(() => {
     router.replace({path: `/file/${e.payload.id}`})
   })
 })
-
+const fileType = computed(() => {
+  if (!file.value) return "other";
+  return getFileType(file.value.fileSuffix)
+})
 
 </script>
 
@@ -36,7 +40,7 @@ onMounted(() => {
   <div class="file-window" v-if="file">
     <file-window-header :file="file"/>
     <div class="file-content">
-      <image-viewer controls :file="file"/>
+      <image-viewer v-if="fileType==='image'" controls :file="file"/>
     </div>
   </div>
 </template>

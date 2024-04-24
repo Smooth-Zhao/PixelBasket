@@ -16,6 +16,7 @@ const useFileContextMenu = () => {
             const fileWindow = WebviewWindow.getByLabel("file")
             if (fileWindow) {
               fileWindow.emit("update_file", {id: file.id})
+              fileWindow.setFocus()
             } else {
               const webview = new WebviewWindow("file", {
                 url: `/file/${file.id}`,

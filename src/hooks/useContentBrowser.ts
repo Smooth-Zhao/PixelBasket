@@ -13,7 +13,6 @@ const useContentBrowser = () => {
 
 const load = async () => {
   files.value = await invoke<PBFile[]>("get_metadata")
-  console.log(files.value)
 }
 
 export default useContentBrowser

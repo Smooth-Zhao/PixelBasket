@@ -28,7 +28,7 @@ export const getFileType = (filename: string):FileType => {
     return "image"
   } else if (["NEF","PSD"].includes(filename)) {
     return "encoded_image"
-  }else if (["MP4","MOV"].includes(filename)) {
+  }else if (["MP4","MOV","WEBM"].includes(filename)) {
     return "video"
   }
   return "other"

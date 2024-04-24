@@ -86,7 +86,7 @@ const zoom = () => {
     .to({
       x: scale.value,
       y: scale.value
-    }, 100)
+    }, 300)
     .easing(Tween.Easing.Quadratic.Out)
     .start();
 }
