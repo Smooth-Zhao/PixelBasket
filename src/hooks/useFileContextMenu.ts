@@ -24,7 +24,6 @@ const useFileContextMenu = () => {
                 visible: false
               });
               webview.once("page_loaded", () => {
-                console.log(webview)
                 webview.show()
               })
             }

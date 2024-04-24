@@ -22,6 +22,8 @@ export const throttle = <T extends (...args: any) => any>(func: T, wait: number)
 
 export type FileType = "image" | "encoded_image" | "video" | "audio" | "psd" | "other"
 export const getFileType = (filename: string):FileType => {
+  filename = filename.toUpperCase()
+  console.log(filename)
   if (['AVIF', 'BMP', 'DDS', 'FARBFELD', 'GIF', 'HDR', 'ICO', 'JPG', 'JPEG', 'EXR', 'PNG', 'PNM', 'QOI', 'TGA', 'TIFF', 'WEBP'].includes(filename)) {
     return "image"
   } else if (["NEF","PSD"].includes(filename)) {
@@ -31,7 +33,12 @@ export const getFileType = (filename: string):FileType => {
   }
   return "other"
 }
-
+export const compareType = (suffix:string,type: FileType | FileType[]): boolean => {
+  if (Array.isArray(type)){
+    return type.includes(getFileType(suffix))
+  }
+  return getFileType(suffix) === type
+}
 //covert bytes to size
 export const bytesToSize = (bytes: number): string => {
 

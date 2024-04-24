@@ -33,9 +33,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="file-window">
-    <file-window-header/>
-    <div class="file-content" v-if="file">
+  <div class="file-window" v-if="file">
+    <file-window-header :file="file"/>
+    <div class="file-content">
       <image-viewer controls :file="file"/>
     </div>
   </div>
@@ -53,7 +53,6 @@ onMounted(() => {
   .file-content {
     height: 0;
     flex: 1 1 auto;
-    padding: 16px;
     overflow: hidden;
   }
 }

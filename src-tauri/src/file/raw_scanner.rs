@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
 
@@ -54,7 +55,7 @@ fn analyze_raw_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
         metadata.thumbnail = base64;
     }
 
-
+    get_exif_data(path);
 
     // let resize_image = thumbnail(&image, metadata.image_width, metadata.image_height);
     // if let Some(base64) = image_to_base64(&resize_image) {
@@ -78,4 +79,20 @@ fn thumbnail(path: &Path) -> Result<String> {
     // buffer转成字符串
 
     Ok(format!("data:image/jpg;base64,{}", String::from_utf8(buffer).unwrap()))
+}
+fn get_exif_data(path: &Path) -> serde_json::Result<String> {
+    let image = rawloader::decode_file(path.to_str().unwrap()).expect("error loading image");
+
+    let mut map: HashMap<&str, _> = HashMap::new();
+    map.insert("make", image.make);
+    map.insert("model", image.model);
+    map.insert("clean_make", image.clean_make);
+    map.insert("clean_model", image.clean_model);
+    map.insert("width", image.width.to_string());
+    map.insert("height", image.height.to_string());
+    map.insert("cpp", image.cpp.to_string());
+    
+    // map 转json
+
+    serde_json::to_string(&map)
 }

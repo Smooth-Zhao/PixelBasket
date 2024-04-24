@@ -74,7 +74,7 @@ impl Metadata {
         if let Some(extension) = path.extension() {
             if let Some(file_suffix) = extension.to_str() {
                 suffix = ".".to_string().add(file_suffix);
-                metadata.file_suffix = file_suffix.to_lowercase();
+                metadata.file_suffix = file_suffix.to_string();
             }
         }
         let mut name = String::new();

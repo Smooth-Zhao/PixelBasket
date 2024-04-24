@@ -4,90 +4,101 @@ import {
   ZoomIn24Regular,
   ZoomOut24Regular,
   ArrowRotateCounterclockwise24Filled,
-  ArrowRotateClockwise24Filled
+  ArrowRotateClockwise24Filled,
+  PageFit20Regular
 } from '@vicons/fluent'
 import {onMounted, ref, watch} from "vue";
-import {useElementBounding} from "@vueuse/core";
 import PBFile from "../../entities/PBFile.ts";
 import {convertFileSrc} from "@tauri-apps/api/tauri";
+import * as PIXI from 'pixi.js';
+import Tween from "@tweenjs/tween.js";
 
 const props = defineProps<{
   file: PBFile,
   controls?: boolean
 }>()
-const canvasRef = ref<HTMLCanvasElement>()
-const targetRef = ref<HTMLDivElement>()
-const angle = ref(0)
-const bounding = useElementBounding(targetRef)
+
 const scale = ref(1)
-const offset = ref([0, 0])
+const angle = ref(0)
+const initialScaling = ref(1)
 
-let image: HTMLImageElement | null = null
-let anchor: number[] = [0, 0]
-let ctx: CanvasRenderingContext2D | null = null
+const pixiContainerRef = ref<HTMLDivElement>()
+const pixiApp = new PIXI.Application()
+const imageSprite = new PIXI.Sprite();
+const imageViewPadding = 2
 
+pixiApp.stage.addChild(imageSprite)
+pixiApp.stage.interactive = true
+const loadImage = async () => {
+  if (props.file) {
+    imageSprite.texture = await PIXI.Assets.load(convertFileSrc(props.file.fullPath));
 
-const handleRotateImage = (number: number) => {
-  angle.value = angle.value + number
-  ctx?.rotate(number * Math.PI / 180)
-  drawImage()
-}
-const drawImage = () => {
-  if (canvasRef.value && image) {
-    ctx?.clearRect(-canvasRef.value.width * scale.value, -canvasRef.value.height * scale.value, canvasRef.value.width * 2 * scale.value, canvasRef.value.height * 2 * scale.value)
-    ctx?.drawImage(
-      image,
-      -image.naturalWidth * scale.value / 2,
-      -image.naturalWidth * scale.value / 2,
-      image.naturalWidth * scale.value,
-      image.naturalHeight * scale.value
-    )
+    const scaleX = (pixiApp.renderer.width - imageViewPadding) / imageSprite.texture.width
+    const scaleY = (pixiApp.renderer.height - imageViewPadding) / imageSprite.texture.height
+
+    imageSprite.scale.set(0)
+    scale.value = Math.min(scaleX, scaleY)
+    initialScaling.value = scale.value
+    zoom()
+    // 缩放图片以适应 Canvas 大小
+    imageSprite.anchor.set(0.5); // 设置锚点为图片中心点
+    imageSprite.position.set(pixiApp.renderer.width / 2, pixiApp.renderer.height / 2); // 设置图片位置为画布中心
   }
 }
 
-watch(() => props.file, async () => {
-  await loadImage()
+watch(() => props.file.fullPath, () => {
+  loadImage()
+
 })
 
-const loadImage = () => new Promise(resolve => {
-  image = new Image()
-  image.src = convertFileSrc(props.file.fullPath)
-  image.onload = () => {
-    // 重置画布旋转
-    ctx?.setTransform(1, 0, 0, 1, 0, 0)
-    ctx?.translate(anchor[0], anchor[1])
-    resolve(1)
-  }
-})
-const reset = () => {
-  scale.value = 1
-  ctx?.setTransform(1, 0, 0, 1, 0, 0)
-  ctx?.translate(anchor[0], anchor[1])
-  drawImage()
-}
-watch(() => bounding, () => {
-  if (canvasRef.value) {
-    canvasRef.value.width = bounding.width.value
-    canvasRef.value.height = bounding.height.value
-
-    anchor = [canvasRef.value.width / 2, canvasRef.value.height / 2]
-  }
-}, {
-  deep: true
-})
 onMounted(async () => {
-  ctx = canvasRef.value ? canvasRef.value.getContext("2d") : null
-  await loadImage()
-  drawImage()
+  await pixiApp.init({
+    backgroundAlpha: 0,
+    resizeTo: pixiContainerRef.value,
+  });
+
+  if (pixiContainerRef.value) {
+    pixiContainerRef.value?.appendChild(pixiApp.canvas)
+  }
+  pixiApp.renderer.addListener("resize", () => {
+    imageSprite.position.set(
+      pixiApp.renderer.width / 2,
+      pixiApp.renderer.height / 2
+    );
+  })
+
+  // 更新 TweenJS 动画
+  function animate() {
+    Tween.update()
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+  loadImage()
 })
 const handleWheel = (e: WheelEvent) => {
-  scale.value = Math.max(Math.min(50, scale.value - e.deltaY * (scale.value / 90) / 10), 0.5)
-  if (Math.abs(scale.value - 1) < 0.1) {
-    scale.value = 1
-  }
-
-  drawImage()
+  scale.value = Math.max(Math.min(50, scale.value - e.deltaY * (scale.value / 90) / 10), 0.1)
+  zoom()
 }
+const zoom = () => {
+  // 创建 TweenJS 补间动画
+  new Tween.Tween(imageSprite.scale)
+    .to({
+      x: scale.value,
+      y: scale.value
+    }, 100)
+    .easing(Tween.Easing.Quadratic.Out)
+    .start();
+}
+const handleRotate = (number: number) => {
+  angle.value += number
+  new Tween.Tween(imageSprite)
+    .to({rotation: angle.value * Math.PI / 180}, 200)
+    .easing(Tween.Easing.Quadratic.Out)
+    .start();
+  handleZoomTo(initialScaling.value)
+}
+
 let dragging = false
 let startPosition = [0, 0]
 const handleMousemove = (e: MouseEvent) => {
@@ -95,35 +106,54 @@ const handleMousemove = (e: MouseEvent) => {
 
   const deltaX = e.clientX - startPosition[0]
   const deltaY = e.clientY - startPosition[1]
-
-  offset.value = [offset.value[0] + deltaX, offset.value[1] + deltaY]
-
   startPosition = [e.clientX, e.clientY]
-
-  ctx?.translate(deltaX, deltaY)
-  drawImage()
+  imageSprite.position.x += deltaX
+  imageSprite.position.y += deltaY
 }
 const handleMousedown = (e: MouseEvent) => {
   dragging = true
   startPosition = [e.clientX, e.clientY]
-
 }
 const handleMouseup = () => {
   dragging = false
+}
+const handleZoom = (number: number) => {
+  scale.value += number
+  zoom()
+}
+const handleZoomTo = (number: number) => {
+  scale.value = number
+  zoom()
+  resetPosition()
+}
+const resetPosition = () => {
+  new Tween.Tween(imageSprite.position)
+    .to({
+      x: pixiApp.renderer.width / 2,
+      y: pixiApp.renderer.height / 2
+    }, 200)
+    .easing(Tween.Easing.Quadratic.Out)
+    .start();
 }
 </script>
 
 <template>
   <div class="image-viewer" ref="targetRef">
-    <canvas
-      ref="canvasRef"
+    <div
+      ref="pixiContainerRef"
+      v-once
+      class="pixi-container"
       @wheel.prevent.stop="handleWheel"
       @mousedown="handleMousedown"
       @mouseup="handleMouseup"
       @mousemove="handleMousemove"
-    ></canvas>
+      @mouseleave="handleMouseup"
+    ></div>
+    <div class="scale" @click="handleZoomTo(1)">
+      {{ (scale * 100) ^ 0 }}%
+    </div>
     <div class="controls" v-if="controls">
-      <n-button strong secondary circle @click="reset">
+      <n-button strong secondary circle @click="handleZoom(-0.1)">
         <template #icon>
           <n-icon :size="24">
             <ZoomIn24Regular/>
@@ -131,7 +161,7 @@ const handleMouseup = () => {
         </template>
       </n-button>
 
-      <n-button strong secondary circle>
+      <n-button strong secondary circle @click="handleZoom(0.1)">
         <template #icon>
           <n-icon :size="24">
             <ZoomOut24Regular/>
@@ -139,15 +169,26 @@ const handleMouseup = () => {
         </template>
       </n-button>
 
-      <n-button strong secondary circle @click="handleRotateImage(-90)">
+      <n-button strong secondary :disabled="scale === 1" circle @click="handleZoomTo(1)">
+        1:1
+      </n-button>
+
+      <n-button strong secondary :disabled="scale === initialScaling" circle @click="handleZoomTo(initialScaling)">
+        <template #icon>
+          <n-icon :size="24">
+            <PageFit20Regular/>
+          </n-icon>
+        </template>
+      </n-button>
+
+      <n-button strong secondary circle @click="handleRotate(-90)">
         <template #icon>
           <n-icon :size="24">
             <ArrowRotateCounterclockwise24Filled/>
           </n-icon>
         </template>
       </n-button>
-
-      <n-button strong secondary circle @click="handleRotateImage(90)">
+      <n-button strong secondary circle @click="handleRotate(90)">
         <template #icon>
           <n-icon :size="24">
             <ArrowRotateClockwise24Filled/>
@@ -167,13 +208,13 @@ const handleMouseup = () => {
   justify-content: center;
   align-items: center;
 
-  canvas {
+  canvas, .pixi-container {
     width: 100%;
     height: 100%;
     display: block;
   }
 
-  .controls {
+  .controls, .scale {
     position: absolute;
     bottom: 16px;
     left: 50%;
@@ -184,6 +225,16 @@ const handleMouseup = () => {
     box-shadow: 0 0 15px rgba(0, 0, 0, .3);
     display: flex;
     gap: 8px;
+
+    button[disabled] {
+      pointer-events: none;
+    }
+  }
+
+  .scale {
+    bottom: 76px;
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }
 </style>
