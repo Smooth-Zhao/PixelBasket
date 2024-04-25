@@ -5,7 +5,6 @@ import useTask from "../hooks/useTask.ts";
 import TaskEvent from "../entities/TaskEvent.ts";
 import useContentBrowser from "../hooks/useContentBrowser.ts";
 import {open} from "@tauri-apps/api/dialog";
-import dcraw from "dcraw";
 
 const task = useTask()
 const {load} = useContentBrowser()

@@ -1,3 +1,5 @@
+import {os, shell} from "@tauri-apps/api";
+
 export const isFunction = <T>(val: unknown): val is (...args: any) => T => {
   return Object.prototype.toString.call(val) === '[object Function]'
 }
@@ -21,20 +23,19 @@ export const throttle = <T extends (...args: any) => any>(func: T, wait: number)
 }
 
 export type FileType = "image" | "encoded_image" | "video" | "audio" | "psd" | "other"
-export const getFileType = (filename: string):FileType => {
+export const getFileType = (filename: string): FileType => {
   filename = filename.toUpperCase()
-  console.log(filename)
   if (['AVIF', 'BMP', 'DDS', 'FARBFELD', 'GIF', 'HDR', 'ICO', 'JPG', 'JPEG', 'EXR', 'PNG', 'PNM', 'QOI', 'TGA', 'TIFF', 'WEBP'].includes(filename)) {
     return "image"
-  } else if (["NEF","PSD"].includes(filename)) {
+  } else if (["NEF", "PSD"].includes(filename)) {
     return "encoded_image"
-  }else if (["MP4","MOV","WEBM"].includes(filename)) {
+  } else if (["MP4", "MOV", "WEBM"].includes(filename)) {
     return "video"
   }
   return "other"
 }
-export const compareType = (suffix:string,type: FileType | FileType[]): boolean => {
-  if (Array.isArray(type)){
+export const compareType = (suffix: string, type: FileType | FileType[]): boolean => {
+  if (Array.isArray(type)) {
     return type.includes(getFileType(suffix))
   }
   return getFileType(suffix) === type
@@ -51,4 +52,30 @@ export const bytesToSize = (bytes: number): string => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
 
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+export const openFile = async (src: string) => {
+  let command: shell.Command | null = null;
+  switch (await os.type()) {
+    case "Windows_NT": {
+      command = new shell.Command("cmd", ["/C", "start", src])
+      break
+    }
+
+    case "Darwin": {
+      command = new shell.Command("open", [src])
+      break
+    }
+
+    case "Linux": {
+      command = new shell.Command("xdg-open", [src])
+      break
+    }
+  }
+
+  command?.execute().then(res => {
+    console.log(res)
+  }).catch(e => {
+    console.error(e)
+  })
 }
