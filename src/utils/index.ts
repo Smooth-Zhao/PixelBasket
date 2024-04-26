@@ -1,4 +1,6 @@
 import {os, shell} from "@tauri-apps/api";
+import PBFile from "../entities/PBFile.ts";
+import {WebviewWindow} from "@tauri-apps/api/window";
 
 export const isFunction = <T>(val: unknown): val is (...args: any) => T => {
   return Object.prototype.toString.call(val) === '[object Function]'
@@ -54,11 +56,33 @@ export const bytesToSize = (bytes: number): string => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 }
 
-export const openFile = async (src: string) => {
+export const openFile = async (file: PBFile) => {
+  if (!compareType(file.fileSuffix, "image")) {
+    openFileWithLocalProgram(file.fullPath)
+  } else {
+    const fileWindow = WebviewWindow.getByLabel("file")
+    if (fileWindow) {
+      fileWindow.emit("update_file", {id: file.id})
+      fileWindow.setFocus()
+    } else {
+      const webview = new WebviewWindow("file", {
+        url: `/file/${file.id}`,
+        decorations: false,
+        title: "查看文件",
+        visible: false
+      });
+      webview.once("page_loaded", () => {
+        webview.show()
+      })
+    }
+  }
+}
+
+export const openFileWithLocalProgram = async (src: string) => {
   let command: shell.Command | null = null;
   switch (await os.type()) {
     case "Windows_NT": {
-      command = new shell.Command("cmd", ["/C", "start", src])
+      command = new shell.Command("cmd", ["/C", "start", "", src])
       break
     }
 
@@ -72,7 +96,6 @@ export const openFile = async (src: string) => {
       break
     }
   }
-
   command?.execute().then(res => {
     console.log(res)
   }).catch(e => {

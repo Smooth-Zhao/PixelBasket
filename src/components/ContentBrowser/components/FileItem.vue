@@ -6,6 +6,7 @@ import {ref} from "vue";
 import FilePreview from "./FilePreview.vue";
 import useSelection from "../../../hooks/useSelection.ts";
 import PBFile from "../../../entities/PBFile.ts";
+import {openFile} from "../../../utils";
 
 const props = defineProps<{
   file: PBFile
@@ -23,7 +24,7 @@ const handleMouse = (e: MouseEvent) => {
 </script>
 
 <template>
-  <div class="file-item" @contextmenu.stop.prevent="handleMouse" ref="el">
+  <div class="file-item" @contextmenu.stop.prevent="handleMouse" @dblclick.stop.prevent="openFile(file)" ref="el">
     <div class="cover">
       <file-preview controls show-file-type v-if="visibility" :file="file"/>
     </div>
