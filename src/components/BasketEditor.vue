@@ -18,6 +18,7 @@ const handleAddFolder = async () => {
   const result = await open({
     directory: true
   })
+  if (!result) return
   basket.value?.directories.add(result as string)
 }
 </script>

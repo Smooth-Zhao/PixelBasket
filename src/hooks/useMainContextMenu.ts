@@ -1,12 +1,14 @@
 import createContextMenu from "../components/ContextMenu/createContextMenu.ts";
-import {useModal} from "naive-ui"
+import {useMessage, useModal} from "naive-ui"
 import {h, ref} from "vue"
 import {ModalApiInjection} from "naive-ui/es/modal/src/ModalProvider";
 import BasketEditor from "../components/BasketEditor.vue";
 import {invoke} from "@tauri-apps/api";
 import Basket from "../entities/Basket.ts";
+import {MessageApiInjection} from "naive-ui/es/message/src/MessageProvider";
 const useMainContextMenu = () => {
   const modal = useModal()
+  const message = useMessage()
   return createContextMenu({
     menu: [
       [
@@ -19,7 +21,7 @@ const useMainContextMenu = () => {
               key: "basket.create",
               label: "创建篮子",
               handler() {
-                onCreateBasket(modal)
+                onCreateBasket(modal,message);
               },
             }, {
               key: "basket.create",
@@ -45,7 +47,7 @@ const useMainContextMenu = () => {
   })
 }
 
-const onCreateBasket = (modal: ModalApiInjection): void => {
+const onCreateBasket = (modal: ModalApiInjection,message:MessageApiInjection): void => {
   const basket = ref(new Basket())
   modal.create({
     title: '创建篮子',
@@ -54,14 +56,20 @@ const onCreateBasket = (modal: ModalApiInjection): void => {
     },
     positiveText: "保存",
     async onPositiveClick() {
-      const result = await invoke("create_basket", {
+      if (!basket.value.name){
+        message.error("请输入篮子名称")
+        return false
+      }
+      if (basket.value.directories.size <= 0){
+        message.error("选择关联文件夹")
+        return false
+      }
+      await invoke("create_basket", {
         basket: {
           name: basket.value.name,
           directories:Array.from(basket.value.directories)
         }
       })
-      alert(result)
-      return false
     },
     showIcon: false,
     maskClosable: false,
