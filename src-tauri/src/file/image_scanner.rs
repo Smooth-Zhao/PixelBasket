@@ -7,9 +7,9 @@ use kmeans_colors::{get_kmeans_hamerly, Calculate, CentroidData, Sort};
 use palette::cast::ComponentsAs;
 use palette::{FromColor, IntoColor, Srgb};
 
-use crate::file::metadata::Metadata;
+use crate::db::entity::metadata::Metadata;
+use crate::db::entity::task::{Task, TaskStatus};
 use crate::file::scan::Scanner;
-use crate::file::task::{Task, TaskStatus};
 use crate::util::error::ErrorHandle;
 use crate::Result;
 

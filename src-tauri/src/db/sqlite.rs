@@ -1,3 +1,4 @@
+use crate::debug;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult, SqliteRow};
 use sqlx::{query, query_as, FromRow, Pool, Sqlite, SqlitePool};
 
@@ -44,6 +45,13 @@ impl Session {
         Err(sqlx::Error::PoolClosed)
     }
 
+    pub fn as_pool(&self) -> Result<&Pool<Sqlite>, sqlx::Error> {
+        if let Some(pool) = &self.pool {
+            return Ok(pool);
+        }
+        Err(sqlx::Error::PoolClosed)
+    }
+
     /// 建立连接
     ///
     /// ```rust,no_run
@@ -73,6 +81,7 @@ impl Session {
     /// # }
     /// ```
     pub async fn execute(&self, sql: &str) -> Result<SqliteQueryResult, sqlx::Error> {
+        debug!("SQL ==> {sql}");
         if let Some(pool) = &self.pool {
             return query(sql).execute(pool).await;
         }
@@ -93,6 +102,7 @@ impl Session {
     /// let result: Vec<SqliteRow> = session.select("SELECT * FROM example").await.expect("");
     /// # }
     pub async fn select(&self, sql: &str) -> Result<Vec<SqliteRow>, sqlx::Error> {
+        debug!("SQL ==> {sql}");
         if let Some(pool) = &self.pool {
             return query(sql).fetch_all(pool).await;
         }
@@ -121,6 +131,7 @@ impl Session {
         &self,
         sql: &str,
     ) -> Result<Vec<T>, sqlx::Error> {
+        debug!("SQL ==> {sql}");
         if let Some(pool) = &self.pool {
             return query_as::<_, T>(sql).fetch_all(pool).await;
         }
@@ -141,6 +152,7 @@ impl Session {
     /// let result: SqliteRow = session.select_one("SELECT * FROM example").await.expect("");
     /// # }
     pub async fn select_one(&self, sql: &str) -> Result<SqliteRow, sqlx::Error> {
+        debug!("SQL ==> {sql}");
         if let Some(pool) = &self.pool {
             return query(sql).fetch_one(pool).await;
         }
@@ -169,6 +181,7 @@ impl Session {
         &self,
         sql: &str,
     ) -> Result<T, sqlx::Error> {
+        debug!("SQL ==> {sql}");
         if let Some(pool) = &self.pool {
             return query_as::<_, T>(sql).fetch_one(pool).await;
         }
@@ -189,6 +202,7 @@ impl Session {
     /// let result: Count = session.count("SELECT COUNT(*) AS count FROM example").await.expect("");
     /// # }
     pub async fn count(&self, sql: &str) -> Result<Count, sqlx::Error> {
+        debug!("SQL ==> {sql}");
         if let Some(pool) = &self.pool {
             return query_as::<_, Count>(sql).fetch_one(pool).await;
         }

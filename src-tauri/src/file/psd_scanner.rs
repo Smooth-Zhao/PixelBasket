@@ -1,14 +1,13 @@
 use std::path::Path;
+
 use image::{DynamicImage, EncodableLayout, ImageBuffer, Rgba};
 use psd::Psd;
 
-
-use crate::file::metadata::Metadata;
-use crate::file::scan::{Scanner};
-use crate::{Result};
+use crate::db::entity::metadata::Metadata;
+use crate::db::entity::task::{Task, TaskStatus};
 use crate::file::image_scanner::image_to_base64;
-use crate::file::task::{Task, TaskStatus};
-use crate::util::error::ErrorHandle;
+use crate::file::scan::Scanner;
+use crate::Result;
 
 pub struct PsdScanner {}
 
@@ -51,7 +50,7 @@ fn analyze_psd_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     let psd = Psd::from_bytes(std::fs::read(path).unwrap().as_bytes()).unwrap();
     metadata.image_width = psd.width();
     metadata.image_height = psd.height();
-    println!("{}*{}",metadata.image_width,metadata.image_height);
+    println!("{}*{}", metadata.image_width, metadata.image_height);
 
     let final_image = psd.rgba();
     // 创建 RgbaImage 对象
@@ -59,7 +58,12 @@ fn analyze_psd_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     // 将 RGBA 数据填充到图像中
     for (x, y, pixel) in image_buffer.enumerate_pixels_mut() {
         let index = (y as usize * metadata.image_width as usize + x as usize) * 4;
-        let rgba = Rgba([final_image[index], final_image[index + 1], final_image[index + 2], final_image[index + 3]]);
+        let rgba = Rgba([
+            final_image[index],
+            final_image[index + 1],
+            final_image[index + 2],
+            final_image[index + 3],
+        ]);
         *pixel = rgba;
     }
 
@@ -75,4 +79,3 @@ fn analyze_psd_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
 
     Ok(())
 }
-

@@ -2,11 +2,10 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
 
-
-use crate::file::metadata::Metadata;
-use crate::file::scan::{Scanner};
-use crate::{Result};
-use crate::file::task::{Task, TaskStatus};
+use crate::db::entity::metadata::Metadata;
+use crate::db::entity::task::{Task, TaskStatus};
+use crate::file::scan::Scanner;
+use crate::Result;
 
 pub struct RawScanner {}
 
@@ -55,7 +54,7 @@ fn analyze_raw_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
         metadata.thumbnail = base64;
     }
 
-    get_exif_data(path);
+    let _ = get_exif_data(path);
 
     // let resize_image = thumbnail(&image, metadata.image_width, metadata.image_height);
     // if let Some(base64) = image_to_base64(&resize_image) {
@@ -78,7 +77,10 @@ fn thumbnail(path: &Path) -> Result<String> {
     let buffer = output.stdout;
     // buffer转成字符串
 
-    Ok(format!("data:image/jpg;base64,{}", String::from_utf8(buffer).unwrap()))
+    Ok(format!(
+        "data:image/jpg;base64,{}",
+        String::from_utf8(buffer).unwrap()
+    ))
 }
 fn get_exif_data(path: &Path) -> serde_json::Result<String> {
     let image = rawloader::decode_file(path.to_str().unwrap()).expect("error loading image");
@@ -91,7 +93,7 @@ fn get_exif_data(path: &Path) -> serde_json::Result<String> {
     map.insert("width", image.width.to_string());
     map.insert("height", image.height.to_string());
     map.insert("cpp", image.cpp.to_string());
-    
+
     // map 转json
 
     serde_json::to_string(&map)

@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use crate::file::metadata::Metadata;
+use crate::db::entity::metadata::Metadata;
+use crate::db::entity::task::{Task, TaskStatus};
 use crate::file::scan::Scanner;
-use crate::file::task::{Task, TaskStatus};
 
 pub struct ModelScanner {}
 

@@ -1,4 +1,5 @@
 pub mod sqlite;
+pub mod entity;
 
 use sqlx::{migrate::MigrateDatabase, Sqlite};
 use std::env;
