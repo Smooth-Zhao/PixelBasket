@@ -12,6 +12,12 @@ pub struct Basket {
     pub name: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct BasketVO {
+    pub id: String,
+    pub name: String,
+}
+
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct BasketFolder {
     pub id: i64,
@@ -120,5 +126,21 @@ impl BasketFolder {
             return result.count > 0;
         }
         false
+    }
+}
+
+impl BasketVO {
+    pub fn from(basket: Basket) -> Self {
+        Self {
+            id: basket.id.to_string(),
+            name: basket.name,
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            id: String::new(),
+            name: String::new(),
+        }
     }
 }

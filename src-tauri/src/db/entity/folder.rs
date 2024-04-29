@@ -15,6 +15,14 @@ pub struct Folder {
     pub path: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct FolderVO {
+    pub id: String,
+    pub pid: String,
+    pub name: String,
+    pub path: String,
+}
+
 impl Folder {
     pub fn new(path: &Path, pid: i64) -> Self {
         Self {
@@ -95,5 +103,25 @@ impl Folder {
             }
         };
         None
+    }
+}
+
+impl FolderVO {
+    pub fn from(folder: Folder) -> Self {
+        Self {
+            id: folder.id.to_string(),
+            pid: folder.pid.to_string(),
+            name: folder.name,
+            path: folder.path,
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            id: String::new(),
+            pid: String::new(),
+            name: String::new(),
+            path: String::new(),
+        }
     }
 }

@@ -3,8 +3,8 @@ use std::vec;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::channel;
 
-use crate::db::entity::basket::{Basket, BasketData};
-use crate::db::entity::folder::Folder;
+use crate::db::entity::basket::{Basket, BasketData, BasketVO};
+use crate::db::entity::folder::{Folder, FolderVO};
 use crate::db::entity::metadata::{Metadata, MetadataVO};
 use crate::db::sqlite::Session;
 use crate::file::image_scanner::ImageScanner;
@@ -63,7 +63,7 @@ pub async fn get_metadata_by_id(id: String) -> MetadataVO {
 }
 
 #[tauri::command]
-pub async fn del_metadata(id: i64) -> bool {
+pub async fn del_metadata(id: String) -> bool {
     let mut session = Session::new("./db/main.db");
     session.connect().await;
     session
@@ -74,7 +74,7 @@ pub async fn del_metadata(id: i64) -> bool {
 }
 
 #[tauri::command]
-pub async fn get_basket() -> Vec<Basket> {
+pub async fn get_basket() -> Vec<BasketVO> {
     let mut session = Session::new("./db/main.db");
     session.connect().await;
     if let Some(basket) = session
@@ -82,13 +82,13 @@ pub async fn get_basket() -> Vec<Basket> {
         .await
         .print_error()
     {
-        return basket;
+        return basket.into_iter().map(|v| BasketVO::from(v)).collect();
     }
     Vec::new()
 }
 
 #[tauri::command]
-pub async fn del_basket(id: i64) -> bool {
+pub async fn del_basket(id: String) -> bool {
     let mut session = Session::new("./db/main.db");
     session.connect().await;
     if session
@@ -107,7 +107,7 @@ pub async fn del_basket(id: i64) -> bool {
 }
 
 #[tauri::command]
-pub async fn get_folder(id: i64) -> Vec<Folder> {
+pub async fn get_folder(id: String) -> Vec<FolderVO> {
     let mut session = Session::new("./db/main.db");
     session.connect().await;
     if let Some(folder) = session
@@ -132,7 +132,7 @@ pub async fn get_folder(id: i64) -> Vec<Folder> {
         .await
         .print_error()
     {
-        return folder;
+        return folder.into_iter().map(|v| FolderVO::from(v)).collect();
     }
     Vec::new()
 }
