@@ -63,6 +63,17 @@ pub async fn get_metadata_by_id(id: String) -> MetadataVO {
 }
 
 #[tauri::command]
+pub async fn get_metadata_like_path(path: String) -> Vec<MetadataVO> {
+    let mut session = Session::new("./db/main.db");
+    session.connect().await;
+    let sql = format!("SELECT * FROM metadata WHERE file_path LIKE '{}%'", path);
+    if let Some(metadata) = session.select_as::<Metadata>(&sql).await.print_error() {
+        return metadata.into_iter().map(|v| MetadataVO::from(v)).collect();
+    }
+    Vec::new()
+}
+
+#[tauri::command]
 pub async fn del_metadata(id: String) -> bool {
     let mut session = Session::new("./db/main.db");
     session.connect().await;

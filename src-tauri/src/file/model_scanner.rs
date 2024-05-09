@@ -29,6 +29,7 @@ impl Scanner for ModelScanner {
                 let path = Path::new(path.as_str());
                 let mut metadata = Metadata::load(path);
                 if metadata.analyze_metadata(path).is_ok() {
+                    // 使用阻塞线程防止数据丢失！
                     runtime.block_on(async move {
                         metadata.save_to_db().await;
                     });

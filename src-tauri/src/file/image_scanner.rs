@@ -40,6 +40,7 @@ impl Scanner for ImageScanner {
                 let mut metadata = Metadata::load(path);
                 if metadata.analyze_metadata(path).is_ok() {
                     if analyze_image_metadata(path, &mut metadata).is_ok() {
+                        // 使用阻塞线程防止数据丢失！
                         runtime.block_on(async move {
                             metadata.save_to_db().await;
                         });
