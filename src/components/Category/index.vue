@@ -10,6 +10,7 @@ import {NIcon, TreeOption,NTree} from "naive-ui"
 import {ref,h} from "vue";
 import {FolderOpenOutline, FolderOutline} from "@vicons/ionicons5";
 import MenuButton from "./components/HeaderButton/Menu.vue"
+import useFolder from "../../hooks/useFolder.ts";
 
 const categories = ref([{
   key: "",
@@ -80,7 +81,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     }
   }
 }
-
+const {folderTree} = useFolder()
 </script>
 
 <template>
@@ -106,8 +107,10 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
     <div class="folder">
       <n-tree
         show-line
+        key-field="id"
+        label-field="name"
         :selected-keys="selectedKeys"
-        :data="createData()"
+        :data="folderTree"
         :node-props="nodeProps"
         :render-switcher-icon="renderSwitcherIconWithExpaned"
       />
@@ -138,6 +141,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
 }
 .folder{
   padding: 8px;
+  overflow: auto;
 }
 .category-list {
   list-style: none;

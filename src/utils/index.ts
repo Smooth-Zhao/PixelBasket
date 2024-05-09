@@ -102,3 +102,40 @@ export const openFileWithLocalProgram = async (src: string) => {
     console.error(e)
   })
 }
+
+/**
+ * 将数组转换为树形结构
+ * @param arr
+ * @param key
+ */
+export function arrayToTree<T extends { id: string }>(arr: T[], key: keyof T) {
+  const roots:(
+    T & {
+      children: T[]
+    }
+  )[] = [];
+
+  const lookup:{
+    [id : string]: T & {
+      children: T[]
+    }
+  } = {};
+
+  // 创建一个lookup对象来快速查找节点
+  arr.forEach(item => {
+    lookup[item.id] = {
+      children: [],
+      ...item
+    };
+  });
+  // 将节点放入正确的位置
+  arr.forEach(item => {
+    if (item[key] === "0") {
+      roots.push(lookup[item.id]);
+    } else {
+      lookup[item[key] as string].children.push(lookup[item.id]);
+    }
+  });
+
+  return roots;
+}

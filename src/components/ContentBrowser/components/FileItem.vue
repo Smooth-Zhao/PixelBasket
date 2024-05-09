@@ -24,7 +24,7 @@ const handleMouse = (e: MouseEvent) => {
 </script>
 
 <template>
-  <div class="file-item" @contextmenu.stop.prevent="handleMouse" @dblclick.stop.prevent="openFile(file)" ref="el">
+  <div class="file-item" @contextmenu.prevent="handleMouse" @dblclick.stop.prevent="openFile(file)" ref="el">
     <div class="cover">
       <file-preview controls show-file-type v-if="visibility" :file="file"/>
     </div>
