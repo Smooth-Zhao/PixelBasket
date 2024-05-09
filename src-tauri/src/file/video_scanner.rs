@@ -28,12 +28,13 @@ impl Scanner for VideoScanner {
         let mut status = TaskStatus::new(task.id);
         if self.is_support(task.file_suffix.as_str()) {
             let path = task.file_path.clone();
-            status.handle(context.runtime.spawn_blocking(move || {
+            let runtime = context.runtime.handle().clone();
+            status.handle(runtime.clone().spawn_blocking(move || {
                 let path = Path::new(path.as_str());
                 let mut metadata = Metadata::load(path);
                 if metadata.analyze_metadata(path).is_ok() {
                     if analyze_video_metadata(path, &mut metadata).is_ok() {
-                        tokio::spawn(async move {
+                        runtime.block_on(async move {
                             metadata.save_to_db().await;
                         });
                         return true;
