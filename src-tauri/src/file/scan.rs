@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
+use tauri::async_runtime::TokioRuntime;
 
 use tokio::sync::mpsc::{Receiver, Sender};
 
@@ -12,9 +13,13 @@ use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id_str;
 use crate::{debug, info, Result};
 
+pub struct Context {
+    pub runtime: TokioRuntime,
+}
+
 pub trait Scanner {
     fn is_support(&self, suffix: &str) -> bool;
-    fn scan(&self, task: &Task) -> TaskStatus;
+    fn scan(&self, task: &Task, context: &Context) -> TaskStatus;
 }
 
 pub struct ScanMsg {
@@ -64,14 +69,18 @@ impl ScanJob {
     }
 
     pub async fn run(&mut self, directories: Vec<String>) {
+        // 文件读取
         self.load_dir(directories).await;
-        self.load_task().await;
-        self.run_scanner().await;
 
         let mut session = Session::new("./db/main.db");
         session.connect().await;
+
+        // 保存文件信息
         self.save_folder(&session).await;
         self.save_basket(&session).await;
+        // 扫描任务处理
+        self.load_task(&session).await;
+        self.run_scanner(&session).await;
     }
 
     pub async fn load_dir(&mut self, directories: Vec<String>) {
@@ -120,12 +129,12 @@ impl ScanJob {
         false
     }
 
-    pub async fn load_task(&mut self) {
+    pub async fn load_task(&mut self, session: &Session) {
         let start = Instant::now();
 
         for path in self.file_list.iter() {
             let metadata = Metadata::load(path);
-            metadata.save_task_to_db().await;
+            metadata.save_task_to_db(session).await;
             self.task_count += 1;
         }
 
@@ -144,46 +153,52 @@ impl ScanJob {
         );
     }
 
-    pub async fn run_scanner(&mut self) {
+    pub async fn run_scanner(&mut self, session: &Session) {
         let start = Instant::now();
 
-        let mut session = Session::new("./db/main.db");
-        session.connect().await;
         if let Some(task_list) = session
             .select_as::<Task>("SELECT * FROM task WHERE status = 0")
             .await
             .print_error()
         {
-            let mut handles = Vec::new();
-            for task in task_list.iter() {
-                for scanner in self.scanners.iter() {
-                    handles.push(scanner.scan(task));
+            if let Some(runtime) = tokio::runtime::Builder::new_multi_thread()
+                .max_blocking_threads(num_cpus::get())
+                .enable_all()
+                .build()
+                .print_error()
+            {
+                let context = Context { runtime };
+                let mut handles = Vec::new();
+                for task in task_list.iter() {
+                    for scanner in self.scanners.iter() {
+                        handles.push(scanner.scan(task, &context));
+                    }
                 }
-            }
-            for status in handles {
-                let id = status.id;
-                let is_success = status.success().await;
-                if is_success {
-                    self.scan_count += 1;
-                    let sql = format!("DELETE FROM task WHERE id = {}", id);
-                    session.execute(&sql).await.print_error();
-                    debug!("<scan:{}> 执行任务<id:{}>完成", self.id, id);
+                for status in handles {
+                    let id = status.id;
+                    let is_success = status.success().await;
+                    if is_success {
+                        self.scan_count += 1;
+                        let sql = format!("DELETE FROM task WHERE id = {}", id);
+                        session.execute(&sql).await.print_error();
+                        debug!("<scan:{}> 执行任务<id:{}>完成", self.id, id);
+                    }
                 }
-            }
 
-            self.tx
-                .send(ScanMsg::new(
-                    "done".to_string(),
-                    self.scan_count.to_string(),
-                ))
-                .await
-                .print_error();
-            info!(
-                "<scan:{}> 执行{}个任务,代码运行时间为{:?}秒",
-                self.id,
-                self.scan_count,
-                (Instant::now() - start).as_secs()
-            );
+                self.tx
+                    .send(ScanMsg::new(
+                        "done".to_string(),
+                        self.scan_count.to_string(),
+                    ))
+                    .await
+                    .print_error();
+                info!(
+                    "<scan:{}> 执行{}个任务,代码运行时间为{:?}秒",
+                    self.id,
+                    self.scan_count,
+                    (Instant::now() - start).as_secs()
+                );
+            }
         }
     }
 
