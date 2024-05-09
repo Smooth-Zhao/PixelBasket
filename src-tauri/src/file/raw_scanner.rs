@@ -4,7 +4,7 @@ use std::process::Command;
 
 use crate::db::entity::metadata::Metadata;
 use crate::db::entity::task::{Task, TaskStatus};
-use crate::file::scan::Scanner;
+use crate::file::scan::{Context, Scanner};
 use crate::Result;
 
 pub struct RawScanner {}
@@ -23,16 +23,18 @@ impl Scanner for RawScanner {
         }
     }
 
-    fn scan(&self, task: &Task) -> TaskStatus {
+    fn scan(&self, task: &Task, context: &Context) -> TaskStatus {
         let mut status = TaskStatus::new(task.id);
         if self.is_support(task.file_suffix.as_str()) {
             let path = task.file_path.clone();
-            status.handle(tokio::spawn(async move {
+            status.handle(context.runtime.spawn_blocking(move || {
                 let path = Path::new(path.as_str());
                 let mut metadata = Metadata::load(path);
                 if metadata.analyze_metadata(path).is_ok() {
                     if analyze_raw_metadata(path, &mut metadata).is_ok() {
-                        metadata.save_to_db().await;
+                        tokio::spawn(async move {
+                            metadata.save_to_db().await;
+                        });
                         return true;
                     };
                 };

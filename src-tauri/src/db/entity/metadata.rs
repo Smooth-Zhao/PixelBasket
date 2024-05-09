@@ -149,15 +149,13 @@ impl Metadata {
                         .await;
                 }
             }
-        }else{
+        } else {
             println!("save to db fail");
         }
     }
 
-    pub async fn save_task_to_db(&self) {
-        let mut session = Session::new("./db/main.db");
-        session.connect().await;
-        if let Ok(pool) = &session.get_pool() {
+    pub async fn save_task_to_db(&self, session: &Session) {
+        if let Ok(pool) = session.as_pool() {
             if let Ok(result) = session
                 .count(
                     format!(
