@@ -11,8 +11,8 @@ const useContentBrowser = () => {
   }
 }
 
-const load = async () => {
-  files.value = await invoke<PBFile[]>("get_metadata")
+const load = async (path:string,like=true) => {
+  files.value = await invoke<PBFile[]>("get_metadata_like_path",{path,like})
 }
 
 export default useContentBrowser

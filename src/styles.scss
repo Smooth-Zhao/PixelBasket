@@ -72,6 +72,12 @@ html, body {
       margin-left: auto;
       font-size: 12px;
     }
+    &>.prefix{
+      position:absolute;
+      left: 0;
+      display: inline-flex;
+      align-items: center;
+    }
     &>.icon-more{
       position: absolute;
       right: 0;
@@ -82,6 +88,10 @@ html, body {
       &>.context-menu{
         display: block;
       }
+    }
+    &.disabled{
+      color: var(--color-gray-1);
+      pointer-events: none;
     }
   }
 }

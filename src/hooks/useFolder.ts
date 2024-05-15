@@ -13,11 +13,11 @@ const folderTree = ref<Array<IFolder & { children: IFolder[] }>>([])
 const useFolder = () => {
 
   return {
-    init,
+    load,
     folderTree
   }
 }
-const init = async (id: string) => {
+const load = async (id: string) => {
   const result = await invoke<IFolder[]>("get_folder", {id})
   folderTree.value = arrayToTree(result, "pid")
 }

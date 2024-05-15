@@ -10,6 +10,7 @@ import {ref,h} from "vue";
 import {FolderOpenOutline, FolderOutline} from "@vicons/ionicons5";
 import MenuButton from "./components/HeaderButton/Menu.vue"
 import useFolder from "../../hooks/useFolder.ts";
+import useContentBrowser from "../../hooks/useContentBrowser.ts";
 const treeRef = ref(null)
 const categories = ref([{
   key: "",
@@ -53,13 +54,13 @@ const renderSwitcherIconWithExpaned = ({ expanded }: { expanded: boolean }) =>
   h(NIcon, null, {
     default: () => h(expanded ? FolderOpenOutline : FolderOutline)
   })
-
+const {load} = useContentBrowser()
 const selectedKeys = ref<string[]>([])
 const nodeProps = ({ option }: { option: TreeOption }) => {
   return {
     onClick () {
       selectedKeys.value = [option.id as string]
-      console.log(option.path)
+      load(option.path as string)
     }
   }
 }

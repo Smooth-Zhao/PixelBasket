@@ -69,7 +69,6 @@ const handleArrowKey = (key: string) => {
   }
 }
 onMounted(() => {
-  load()
   document.removeEventListener("keyup", handleKeyUp)
   document.addEventListener("keyup", handleKeyUp)
 })

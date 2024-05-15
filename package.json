@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "NO_STRIP=true tauri build",
+    "tauri:build": "tauri build --verbose",
     "tauri:preview": "tauri dev --no-watch"
   },
   "dependencies": {

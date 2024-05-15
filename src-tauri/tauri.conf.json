@@ -43,10 +43,7 @@
         "width": 1280,
         "height": 800,
         "decorations": false,
-        "transparent": true,
-        "wix": {
-          "language": "zh-CN"
-        }
+        "transparent": true
       }
     ],
     "security": {
@@ -56,10 +53,6 @@
       "active": true,
       "targets": "all",
       "identifier": "com.smooth.pixel-basket",
-      "resources": [
-        "./db",
-        "./bin"
-      ],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -68,7 +61,12 @@
         "icons/icon.ico"
       ],
       "resources": {
-        "./db/release/*": "db"
+        "./db/*": "db"
+      },
+      "windows": {
+        "wix": {
+          "language": "zh-CN"
+        }
       }
     }
   }
