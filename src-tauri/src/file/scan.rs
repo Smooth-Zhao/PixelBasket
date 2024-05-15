@@ -46,6 +46,7 @@ pub struct ScanJob {
     pub folder_list: Vec<Folder>,
     pub basket_name: String,
     pub directories: Vec<String>,
+    pub cpu_nums: usize,
 }
 
 impl ScanJob {
@@ -62,6 +63,7 @@ impl ScanJob {
             folder_list: Vec::new(),
             basket_name: String::new(),
             directories: Vec::new(),
+            cpu_nums: num_cpus::get() / 2,
         }
     }
 
@@ -170,7 +172,7 @@ impl ScanJob {
             .print_error()
         {
             if let Some(runtime) = tokio::runtime::Builder::new_multi_thread()
-                .max_blocking_threads(num_cpus::get())
+                .max_blocking_threads(self.cpu_nums)
                 .enable_all()
                 .build()
                 .print_error()
