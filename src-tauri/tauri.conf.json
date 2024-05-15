@@ -22,7 +22,8 @@
             "name": "cmd",
             "cmd": "cmd",
             "args": true
-          },{
+          },
+          {
             "name": "xdg-open",
             "cmd": "xdg-open",
             "args": true
@@ -65,6 +66,9 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
+      ],
+      "resources": [
+        "./db/release/*"
       ]
     }
   }

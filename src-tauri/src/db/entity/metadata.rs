@@ -13,6 +13,7 @@ use sqlx::query;
 use crate::db::sqlite::Session;
 use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id;
+use crate::config::DB;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct Metadata {
@@ -110,7 +111,7 @@ impl Metadata {
     }
 
     pub async fn save_to_db(&self) {
-        let mut session = Session::new("./db/main.db");
+        let mut session = Session::new(DB);
         session.connect().await;
         if let Ok(pool) = &session.get_pool() {
             if let Ok(result) = session
