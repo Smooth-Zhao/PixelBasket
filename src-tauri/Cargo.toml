@@ -11,10 +11,26 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = ["shell-open"] }
+tauri = { version = "1", features = ["api-all", "linux-protocol-headers"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 dotenv = "0.15"
+sqlx = { version = "0.7.4", features = ["runtime-tokio", "sqlite"] }
+tokio = { version = "1.20.0", features = ["full"] }
+once_cell = { version = "1" }
+time = "0.3.34"
+image = "0.25.1"
+chrono = "0.4.37"
+base64 = "0.22.0"
+kmeans_colors = "0.6.0"
+palette = "0.7.5"
+snowflaked = { version = "1.0.3", features = ["sync"] }
+file-hashing = "0.1.2"
+sha1 = "0.10.6"
+rawloader = "0.37.1"
+regex = "1.10.4"
+psd = "0.3.5"
+num_cpus = "1.16.0"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

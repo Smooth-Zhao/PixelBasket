@@ -1,6 +1,10 @@
 <script setup lang="ts">
-
-import Category from "./Category.vue";
+import Category from "./Category/index.vue";
+import ContentBrowser from "./ContentBrowser/index.vue";
+import ContentFooter from "./ContentFooter.vue";
+import ContentHeader from "./ContentHeader.vue";
+import FileAttribute from "./FileAttribute.vue";
+import Dev from "./Dev.vue";
 </script>
 
 <template>
@@ -8,9 +12,16 @@ import Category from "./Category.vue";
     <div class="layout-left">
       <category/>
     </div>
-    <div class="layout-center"></div>
-    <div class="layout-right"></div>
+    <div class="layout-center">
+      <content-header/>
+      <content-browser/>
+      <content-footer/>
+    </div>
+    <div class="layout-right">
+      <file-attribute/>
+    </div>
   </div>
+  <dev/>
 </template>
 <style scoped lang="scss">
 .layout {
@@ -28,6 +39,8 @@ import Category from "./Category.vue";
     width: 0;
     flex: 1 1 auto;
     background-color: var(--color-dark-1);
+    display: flex;
+    flex-direction: column;
   }
 
   .layout-right {
