@@ -22,7 +22,8 @@
             "name": "cmd",
             "cmd": "cmd",
             "args": true
-          },{
+          },
+          {
             "name": "xdg-open",
             "cmd": "xdg-open",
             "args": true
@@ -46,7 +47,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost; media-src 'self' asset: https://asset.localhost"
+      "csp": null
     },
     "bundle": {
       "active": true,
@@ -58,6 +59,9 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
+      ],
+      "resources": [
+        "./db/release/*"
       ]
     }
   }

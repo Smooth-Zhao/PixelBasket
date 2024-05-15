@@ -14,6 +14,7 @@ use crate::file::raw_scanner::RawScanner;
 use crate::file::scan::{ScanJob, ScanMsg};
 use crate::file::video_scanner::VideoScanner;
 use crate::util::error::ErrorHandle;
+use crate::config::DB;
 
 #[tauri::command]
 pub fn create_basket(basket: BasketData, _app_handle: tauri::AppHandle) -> &'static str {
@@ -39,7 +40,7 @@ pub struct Page {
 
 #[tauri::command]
 pub async fn get_metadata() -> Vec<MetadataVO> {
-    let mut session = Session::new("./db/main.db");
+    let mut session = Session::new(DB);
     session.connect().await;
     if let Some(metadata) = session
         .select_as::<Metadata>("SELECT * FROM metadata WHERE is_del = 0")
@@ -53,7 +54,7 @@ pub async fn get_metadata() -> Vec<MetadataVO> {
 
 #[tauri::command]
 pub async fn get_metadata_by_id(id: String) -> MetadataVO {
-    let mut session = Session::new("./db/main.db");
+    let mut session = Session::new(DB);
     session.connect().await;
     let sql = format!("SELECT * FROM metadata WHERE id = {}", id);
     if let Some(metadata) = session.select_one_as::<Metadata>(&sql).await.print_error() {
@@ -64,7 +65,7 @@ pub async fn get_metadata_by_id(id: String) -> MetadataVO {
 
 #[tauri::command]
 pub async fn get_metadata_like_path(path: String) -> Vec<MetadataVO> {
-    let mut session = Session::new("./db/main.db");
+    let mut session = Session::new(DB);
     session.connect().await;
     let sql = format!("SELECT * FROM metadata WHERE file_path LIKE '{}%'", path);
     if let Some(metadata) = session.select_as::<Metadata>(&sql).await.print_error() {
@@ -75,7 +76,7 @@ pub async fn get_metadata_like_path(path: String) -> Vec<MetadataVO> {
 
 #[tauri::command]
 pub async fn del_metadata(id: String) -> bool {
-    let mut session = Session::new("./db/main.db");
+    let mut session = Session::new(DB);
     session.connect().await;
     session
         .execute(&format!("UPDATE metadata SET is_del = 1 WHERE id = {}", id))
@@ -86,7 +87,7 @@ pub async fn del_metadata(id: String) -> bool {
 
 #[tauri::command]
 pub async fn get_basket() -> Vec<BasketVO> {
-    let mut session = Session::new("./db/main.db");
+    let mut session = Session::new(DB);
     session.connect().await;
     if let Some(basket) = session
         .select_as::<Basket>("SELECT * FROM basket")
@@ -100,7 +101,7 @@ pub async fn get_basket() -> Vec<BasketVO> {
 
 #[tauri::command]
 pub async fn del_basket(id: String) -> bool {
-    let mut session = Session::new("./db/main.db");
+    let mut session = Session::new(DB);
     session.connect().await;
     if session
         .execute(&format!("DELETE FROM basket WHERE id = {id}"))
@@ -119,7 +120,7 @@ pub async fn del_basket(id: String) -> bool {
 
 #[tauri::command]
 pub async fn get_folder(id: String) -> Vec<FolderVO> {
-    let mut session = Session::new("./db/main.db");
+    let mut session = Session::new(DB);
     session.connect().await;
     if let Some(folder) = session
         .select_as::<Folder>(&format!(

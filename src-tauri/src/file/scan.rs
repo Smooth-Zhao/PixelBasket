@@ -1,9 +1,10 @@
 use std::path::{Path, PathBuf};
-use std::time::{Instant};
+use std::time::Instant;
 use tauri::async_runtime::TokioRuntime;
 
 use tokio::sync::mpsc::{Receiver, Sender};
 
+use crate::config::DB;
 use crate::db::entity::basket::{Basket, BasketData};
 use crate::db::entity::folder::Folder;
 use crate::db::entity::metadata::Metadata;
@@ -72,7 +73,7 @@ impl ScanJob {
         // 文件读取
         self.load_dir(directories).await;
 
-        let mut session = Session::new("./db/main.db");
+        let mut session = Session::new(DB);
         session.connect().await;
 
         // 保存文件信息

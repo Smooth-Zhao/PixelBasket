@@ -1,8 +1,8 @@
-use base64::engine::general_purpose;
-use base64::Engine;
-use std::io::stdout;
 use std::path::Path;
 use std::process::Command;
+
+use base64::Engine;
+use base64::engine::general_purpose;
 
 use crate::db::entity::metadata::Metadata;
 use crate::db::entity::task::{Task, TaskStatus};
