@@ -67,9 +67,9 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "resources": [
-        "./db/release/*"
-      ]
+      "resources": {
+        "./db/release/*": "db"
+      }
     }
   }
 }
