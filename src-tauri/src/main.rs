@@ -6,6 +6,8 @@ use pixel_basket::util::error::ErrorHandle;
 #[tokio::main]
 async fn main() {
     dotenv().ok();
+    // 判断是否是release模式
+
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![

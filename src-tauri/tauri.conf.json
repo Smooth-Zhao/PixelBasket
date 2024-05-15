@@ -42,16 +42,23 @@
         "width": 1280,
         "height": 800,
         "decorations": false,
-        "transparent": true
+        "transparent": true,
+        "wix": {
+          "language": "zh-CN"
+        }
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost; media-src 'self' asset: https://asset.localhost"
+      "csp": null
     },
     "bundle": {
       "active": true,
       "targets": "all",
       "identifier": "com.smooth.pixel-basket",
+      "resources": [
+        "./db",
+        "./bin"
+      ],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
