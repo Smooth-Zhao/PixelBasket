@@ -1,8 +1,5 @@
 import { createApp } from "vue";
-import "./styles.scss";
+import "./styles.css";
 import App from "./App.vue";
-import initListener from "./listeners";
-import router from "./router"
-initListener()
 
-createApp(App).use(router).mount("#app");
+createApp(App).mount("#app");

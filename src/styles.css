@@ -1,0 +1,43 @@
+:root {
+    --color-dark-1: #404040;
+    --color-dark-2: #383838;
+    --color-dark-3: #2C2C2C;
+
+    --color-gray-1: #9d9d9d;
+
+    --color-white-1: #d7d7d7;
+
+    font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+
+    color: #d7d7d7;
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#app {
+    background: url("./assets/hero-1.jpg") no-repeat;
+    background-size: 100% 100%;
+    margin: 8px;
+    overflow: hidden;
+    height: calc(100% - 16px);
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .8);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+    }
+}
