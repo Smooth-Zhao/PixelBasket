@@ -19,7 +19,7 @@ const handleColorItemClick = (color: string) => {
     })
 }
 const file = computed<PBFile>(() => {
-  return Array.from(items.value).at(-1)
+  return Array.from(items.value).at(-1) || new PBFile()
 })
 const colors = computed(() => {
   return file.value?.colors.split(",").slice(1, 7)
