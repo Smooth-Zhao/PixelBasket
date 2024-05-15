@@ -4,7 +4,6 @@ import {Bug20Filled} from "@vicons/fluent"
 import useTask from "../hooks/useTask.ts";
 import TaskEvent from "../entities/TaskEvent.ts";
 import useContentBrowser from "../hooks/useContentBrowser.ts";
-import {open} from "@tauri-apps/api/dialog";
 
 const task = useTask()
 const {load} = useContentBrowser()

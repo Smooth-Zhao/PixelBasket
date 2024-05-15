@@ -1,48 +1,50 @@
-import {ref, render, h} from "vue";
-import ContextMenu from "./index.vue"
-import {isFunction} from "../../utils";
+import {ref, Component, Ref, shallowReactive} from "vue";
 
-export interface IContextMenuItem {
-  key: string
-  label: string
-  shortcut?:string
-  handler?: () => void
-  children?: IContextMenuGroup[]
-}
-export type IContextMenuGroup = IContextMenuItem[]
-interface ICreateContextMenuOption {
-  menu: IContextMenuGroup[]
-}
-
-export const activeContextMenuData = ref<{
-  option: ICreateContextMenuOption,
-  position: {
-    x: number,
-    y: number
+export interface IContextMenuProps<T>{
+  payload:T,
+  show:boolean,
+  position:{
+    x:number,
+    y:number,
   }
-}>()
-const createContextMenu = (param: ICreateContextMenuOption | (() => ICreateContextMenuOption)) => {
-  render(h(ContextMenu), document.body)
-  let option:ICreateContextMenuOption;
-  if (isFunction(param)){
-    option = param()
+}
+export const contextMenuMap = shallowReactive(new Map<string,{
+  component:Component,
+  props:Ref<IContextMenuProps<any>>
+}>())
+
+/**
+ *
+ * @param name
+ * @param component
+ * @param initialProps
+ */
+const createContextMenu = function <T extends Ref>(name:string,component:Component,initialProps:T) {
+  let componentProps:Ref<IContextMenuProps<T>>;
+  if (contextMenuMap.has(name)){
+    componentProps = contextMenuMap.get(name)!.props
   }else{
-    option = param
-  }
-
-  const trigger = (e: MouseEvent) => {
-    e.stopPropagation()
-    e.preventDefault()
-    activeContextMenuData.value = {
-      option,
-      position: {
-        x: e.clientX,
-        y: e.clientY
+    componentProps = ref<IContextMenuProps<T>>({
+      payload:initialProps.value,
+      show:false,
+      position:{
+        x:0,
+        y:0,
       }
-    }
+    })
+
+    contextMenuMap.set(name,{
+      component,
+      props:componentProps
+    })
   }
   return {
-    trigger
+    props:componentProps,
+    trigger(e: MouseEvent){
+      componentProps.value.position.x =  e.clientX
+      componentProps.value.position.y = e.clientY
+      componentProps.value.show = true
+    }
   }
 }
 export default createContextMenu

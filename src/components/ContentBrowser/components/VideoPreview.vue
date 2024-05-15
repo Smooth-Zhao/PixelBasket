@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, nextTick, ref} from "vue";
+import {nextTick, ref} from "vue";
 import {throttle} from "../../../utils";
 
 defineProps<{
@@ -30,7 +30,7 @@ const stop = () => {
   if (videoRef.value) {
     setTimeout(()=>{
       videoRef.value?.pause()
-      videoRef.value.currentTime = 0;
+      videoRef.value!.currentTime = 0;
       videoPlayProgress.value = 0;
     },20)
   }
@@ -47,7 +47,7 @@ const setVideoProgress = throttle((time:number) => {
 const handleProgress = (e:MouseEvent) => {
   // 根据offsetX设置视频播放进度
   if (videoRef.value) {
-    setVideoProgress(e.offsetX / e.target?.clientWidth * videoRef.value.duration)
+    setVideoProgress(e.offsetX / (e.target as HTMLElement).clientWidth * videoRef.value.duration)
   }
 }
 const pause = () => {

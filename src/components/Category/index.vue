@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import {appWindow} from "@tauri-apps/api/window";
 import {
   ArrowRepeatAll20Filled,
   BinFull20Regular,
@@ -10,7 +9,8 @@ import {NIcon, TreeOption,NTree} from "naive-ui"
 import {ref,h} from "vue";
 import {FolderOpenOutline, FolderOutline} from "@vicons/ionicons5";
 import MenuButton from "./components/HeaderButton/Menu.vue"
-
+import useFolder from "../../hooks/useFolder.ts";
+const treeRef = ref(null)
 const categories = ref([{
   key: "",
   name: "全部",
@@ -53,34 +53,17 @@ const renderSwitcherIconWithExpaned = ({ expanded }: { expanded: boolean }) =>
   h(NIcon, null, {
     default: () => h(expanded ? FolderOpenOutline : FolderOutline)
   })
-function createData (level = 4, baseKey = ''): TreeOption[] | undefined {
-  if (!level) return undefined
-  return new Array(6 - level).fill(undefined).map((_, index) => {
-    const key = '' + baseKey + level + index
-    return {
-      label: createLabel(level),
-      key,
-      children: createData(level - 1, key)
-    }
-  })
-}
 
-function createLabel (level: number): string {
-  if (level === 4) return '新建文件夹'
-  if (level === 3) return '新建文件夹'
-  if (level === 2) return '新建文件夹'
-  if (level === 1) return '新建文件夹'
-  return ''
-}
 const selectedKeys = ref<string[]>([])
 const nodeProps = ({ option }: { option: TreeOption }) => {
   return {
     onClick () {
-      selectedKeys.value = [option.key as string]
+      selectedKeys.value = [option.id as string]
+      console.log(option.path)
     }
   }
 }
-
+const {folderTree} = useFolder()
 </script>
 
 <template>
@@ -105,9 +88,12 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
 
     <div class="folder">
       <n-tree
+        ref="treeRef"
         show-line
+        key-field="id"
+        label-field="name"
         :selected-keys="selectedKeys"
-        :data="createData()"
+        :data="folderTree"
         :node-props="nodeProps"
         :render-switcher-icon="renderSwitcherIconWithExpaned"
       />
@@ -138,6 +124,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
 }
 .folder{
   padding: 8px;
+  overflow: auto;
 }
 .category-list {
   list-style: none;

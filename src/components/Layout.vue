@@ -3,10 +3,8 @@ import Category from "./Category/index.vue";
 import ContentBrowser from "./ContentBrowser/index.vue";
 import ContentFooter from "./ContentFooter.vue";
 import ContentHeader from "./ContentHeader.vue";
-import useMainContextMenu from "../hooks/useMainContextMenu.ts";
 import FileAttribute from "./FileAttribute.vue";
 import Dev from "./Dev.vue";
-const { trigger } = useMainContextMenu()
 </script>
 
 <template>
@@ -14,7 +12,7 @@ const { trigger } = useMainContextMenu()
     <div class="layout-left">
       <category/>
     </div>
-    <div class="layout-center" @contextmenu="trigger">
+    <div class="layout-center">
       <content-header/>
       <content-browser/>
       <content-footer/>

@@ -41,7 +41,6 @@
         "title": "像素篮子",
         "width": 1280,
         "height": 800,
-        "label": "main",
         "decorations": false,
         "transparent": true
       }
