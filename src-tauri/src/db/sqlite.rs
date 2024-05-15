@@ -212,8 +212,8 @@ impl Session {
 
 #[cfg(test)]
 mod tests {
+    use crate::config::{get_db_path, DB};
     use crate::db::sqlite::Session;
-    use crate::config::DB;
     use sqlx::query;
 
     #[derive(Debug, sqlx::FromRow)]
@@ -224,7 +224,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_pool() {
-        let mut session = Session::new(DB);
+        let mut session = Session::new(get_db_path());
         session.connect().await;
         let pool = session.get_pool();
         println!("{:?}", pool)
@@ -232,13 +232,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_connect() {
-        let mut session = Session::new(DB);
+        let mut session = Session::new(get_db_path());
         session.connect().await;
     }
 
     #[tokio::test]
     async fn test_execute() {
-        let mut session = Session::new(DB);
+        let mut session = Session::new(get_db_path());
         session.connect().await;
         session.execute("DROP TABLE users").await.expect("err");
         session
@@ -254,7 +254,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_insert() {
-        let mut session = Session::new(DB);
+        let mut session = Session::new(get_db_path());
         session.connect().await;
         let user = User {
             id: 10,
@@ -270,7 +270,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_query() {
-        let mut session = Session::new(DB);
+        let mut session = Session::new(get_db_path());
         session.connect().await;
         session
             .execute("INSERT INTO users (name) VALUES ('test')")

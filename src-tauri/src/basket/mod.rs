@@ -3,6 +3,7 @@ use std::vec;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::channel;
 
+use crate::config::get_db_path;
 use crate::db::entity::basket::{Basket, BasketData, BasketVO};
 use crate::db::entity::folder::{Folder, FolderVO};
 use crate::db::entity::metadata::{Metadata, MetadataVO};
@@ -14,10 +15,9 @@ use crate::file::raw_scanner::RawScanner;
 use crate::file::scan::{ScanJob, ScanMsg};
 use crate::file::video_scanner::VideoScanner;
 use crate::util::error::ErrorHandle;
-use crate::config::DB;
 
 #[tauri::command]
-pub fn create_basket(basket: BasketData, _app_handle: tauri::AppHandle) -> &'static str {
+pub fn create_basket(basket: BasketData) -> &'static str {
     let (tx, rx) = channel::<ScanMsg>(16);
     let mut scan = ScanJob::new(tx);
     scan.add_scanners(vec![
@@ -32,6 +32,22 @@ pub fn create_basket(basket: BasketData, _app_handle: tauri::AppHandle) -> &'sta
     "OK"
 }
 
+#[tauri::command]
+pub fn run_task() -> &'static str {
+    let (tx, rx) = channel::<ScanMsg>(16);
+    let mut scan = ScanJob::new(tx);
+    scan.add_scanners(vec![
+        ImageScanner::wrap(),
+        ModelScanner::wrap(),
+        VideoScanner::wrap(),
+        RawScanner::wrap(),
+        PsdScanner::wrap(),
+    ]);
+    scan.monitor_async(rx);
+    scan.run_task_async();
+    "OK"
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Page {
     size: usize,
@@ -40,7 +56,7 @@ pub struct Page {
 
 #[tauri::command]
 pub async fn get_metadata() -> Vec<MetadataVO> {
-    let mut session = Session::new(DB);
+    let mut session = Session::new(get_db_path());
     session.connect().await;
     if let Some(metadata) = session
         .select_as::<Metadata>("SELECT * FROM metadata WHERE is_del = 0")
@@ -54,7 +70,7 @@ pub async fn get_metadata() -> Vec<MetadataVO> {
 
 #[tauri::command]
 pub async fn get_metadata_by_id(id: String) -> MetadataVO {
-    let mut session = Session::new(DB);
+    let mut session = Session::new(get_db_path());
     session.connect().await;
     let sql = format!("SELECT * FROM metadata WHERE id = {}", id);
     if let Some(metadata) = session.select_one_as::<Metadata>(&sql).await.print_error() {
@@ -64,10 +80,14 @@ pub async fn get_metadata_by_id(id: String) -> MetadataVO {
 }
 
 #[tauri::command]
-pub async fn get_metadata_like_path(path: String) -> Vec<MetadataVO> {
-    let mut session = Session::new(DB);
+pub async fn get_metadata_like_path(path: String, like: bool) -> Vec<MetadataVO> {
+    let mut session = Session::new(get_db_path());
     session.connect().await;
-    let sql = format!("SELECT * FROM metadata WHERE file_path LIKE '{}%'", path);
+    let sql = format!(
+        "SELECT * FROM metadata WHERE file_path {} '{}%'",
+        if like { "LIKE" } else { "=" },
+        path
+    );
     if let Some(metadata) = session.select_as::<Metadata>(&sql).await.print_error() {
         return metadata.into_iter().map(|v| MetadataVO::from(v)).collect();
     }
@@ -76,7 +96,7 @@ pub async fn get_metadata_like_path(path: String) -> Vec<MetadataVO> {
 
 #[tauri::command]
 pub async fn del_metadata(id: String) -> bool {
-    let mut session = Session::new(DB);
+    let mut session = Session::new(get_db_path());
     session.connect().await;
     session
         .execute(&format!("UPDATE metadata SET is_del = 1 WHERE id = {}", id))
@@ -87,7 +107,7 @@ pub async fn del_metadata(id: String) -> bool {
 
 #[tauri::command]
 pub async fn get_basket() -> Vec<BasketVO> {
-    let mut session = Session::new(DB);
+    let mut session = Session::new(get_db_path());
     session.connect().await;
     if let Some(basket) = session
         .select_as::<Basket>("SELECT * FROM basket")
@@ -101,7 +121,7 @@ pub async fn get_basket() -> Vec<BasketVO> {
 
 #[tauri::command]
 pub async fn del_basket(id: String) -> bool {
-    let mut session = Session::new(DB);
+    let mut session = Session::new(get_db_path());
     session.connect().await;
     if session
         .execute(&format!("DELETE FROM basket WHERE id = {id}"))
@@ -120,7 +140,7 @@ pub async fn del_basket(id: String) -> bool {
 
 #[tauri::command]
 pub async fn get_folder(id: String) -> Vec<FolderVO> {
-    let mut session = Session::new(DB);
+    let mut session = Session::new(get_db_path());
     session.connect().await;
     if let Some(folder) = session
         .select_as::<Folder>(&format!(

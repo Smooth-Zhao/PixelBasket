@@ -4,7 +4,7 @@ use tauri::async_runtime::TokioRuntime;
 
 use tokio::sync::mpsc::{Receiver, Sender};
 
-use crate::config::DB;
+use crate::config::get_db_path;
 use crate::db::entity::basket::{Basket, BasketData};
 use crate::db::entity::folder::Folder;
 use crate::db::entity::metadata::Metadata;
@@ -73,7 +73,7 @@ impl ScanJob {
         // 文件读取
         self.load_dir(directories).await;
 
-        let mut session = Session::new(DB);
+        let mut session = Session::new(get_db_path());
         session.connect().await;
 
         // 保存文件信息
@@ -81,6 +81,13 @@ impl ScanJob {
         self.save_basket(&session).await;
         // 扫描任务处理
         self.load_task(&session).await;
+        self.run_scanner(&session).await;
+    }
+
+    pub async fn run_task(&mut self) {
+        let mut session = Session::new(get_db_path());
+        session.connect().await;
+        // 扫描任务处理
         self.run_scanner(&session).await;
     }
 
@@ -209,6 +216,10 @@ impl ScanJob {
         self.basket_name = basket.name;
         self.directories = basket.directories;
         tokio::spawn(async move { self.run(self.directories.clone()).await });
+    }
+
+    pub fn run_task_async(mut self) {
+        tokio::spawn(async move { self.run_task().await });
     }
 
     pub fn monitor_async(&self, mut rx: Receiver<ScanMsg>) {

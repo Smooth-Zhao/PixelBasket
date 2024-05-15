@@ -10,10 +10,10 @@ use serde::{Deserialize, Serialize};
 use sha1::{Digest, Sha1};
 use sqlx::query;
 
+use crate::config::get_db_path;
 use crate::db::sqlite::Session;
 use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id;
-use crate::config::DB;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct Metadata {
@@ -111,7 +111,7 @@ impl Metadata {
     }
 
     pub async fn save_to_db(&self) {
-        let mut session = Session::new(DB);
+        let mut session = Session::new(get_db_path());
         session.connect().await;
         if let Ok(pool) = &session.get_pool() {
             if let Ok(result) = session
