@@ -3,10 +3,22 @@ import {NFloatButton, NIcon} from "naive-ui"
 import {Bug20Filled} from "@vicons/fluent"
 import useTask from "../hooks/useTask.ts";
 import TaskEvent from "../entities/TaskEvent.ts";
-import useContentBrowser from "../hooks/useContentBrowser.ts";
+import {invoke} from "@tauri-apps/api";
+import useFolder from "../hooks/useFolder.ts";
+import useBasket from "../hooks/useBasket.ts";
+
+const basket = useBasket()
+const load = () => {
+  basket.init().then(() => {
+    if (basket.baskets.value.length <= 0) {
+      // TODO：弹出创建篮子引导
+    } else {
+      useFolder().load(basket.baskets.value[0].id)
+    }
+  })
+}
 
 const task = useTask()
-const {load} = useContentBrowser()
 const handleAddTask = () => {
   const testTask = {
     type: "task" + task.tasks.length,
@@ -24,6 +36,10 @@ const handleAddTask = () => {
     })
   }, 1000)
 }
+const runTask = ()=>{
+
+  invoke('run_task')
+}
 </script>
 
 <template>
@@ -38,8 +54,8 @@ const handleAddTask = () => {
       <n-float-button @click="load">
         读取
       </n-float-button>
-      <n-float-button>
-        Raw
+      <n-float-button @click="runTask">
+        扫描
       </n-float-button>
     </template>
   </n-float-button>

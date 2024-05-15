@@ -74,9 +74,12 @@ const handleSwitchBasket = async (item: Basket) => {
               </context-menu-item>
             </context-menu-group>
 
-            <context-menu-group>
-              <context-menu-item :disabled="currentBasket?.id === item.id" @click="handleSwitchBasket(item)"
-                                 v-for="item in baskets">
+            <context-menu-group v-if="baskets.length > 0">
+              <context-menu-item
+                :disabled="currentBasket?.id === item.id"
+                @click="handleSwitchBasket(item)"
+                v-for="item in baskets"
+              >
                 <template #prefix v-if="currentBasket?.id === item.id">
                   <n-icon size="14">
                     <Checkmark20Regular/>

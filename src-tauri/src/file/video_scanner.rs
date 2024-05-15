@@ -68,7 +68,7 @@ fn duration(path: &Path) -> Result<i64>{
         .output()?;         // 执行 FFmpeg 命令并获取输出
 
     let duration_str = String::from_utf8_lossy(&output.stdout);
-    let duration: f64 = duration_str.trim().parse().unwrap();
+    let duration: f64 = duration_str.trim().parse()?;
     Ok((duration * 1000f64) as i64)
 }
 /// 生成缩咯图

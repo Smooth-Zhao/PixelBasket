@@ -50,7 +50,7 @@ const categories = ref([{
   icon: () => Delete20Regular
 }])
 
-const renderSwitcherIconWithExpaned = ({ expanded }: { expanded: boolean }) =>
+const renderSwitcherIconWithExpanded = ({ expanded }: { expanded: boolean }) =>
   h(NIcon, null, {
     default: () => h(expanded ? FolderOpenOutline : FolderOutline)
   })
@@ -60,7 +60,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
   return {
     onClick () {
       selectedKeys.value = [option.id as string]
-      load(option.path as string)
+      load(option.path + "\\" as string,false)
     }
   }
 }
@@ -96,7 +96,7 @@ const {folderTree} = useFolder()
         :selected-keys="selectedKeys"
         :data="folderTree"
         :node-props="nodeProps"
-        :render-switcher-icon="renderSwitcherIconWithExpaned"
+        :render-switcher-icon="renderSwitcherIconWithExpanded"
       />
     </div>
   </div>
