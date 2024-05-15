@@ -13,6 +13,7 @@ async fn main() {
             basket::get_metadata,
             basket::del_metadata,
             basket::get_metadata_by_id,
+            basket::get_metadata_like_path,
             basket::get_basket,
             basket::del_basket,
             basket::get_folder

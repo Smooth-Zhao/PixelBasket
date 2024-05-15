@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::time::Instant;
+use std::time::{Instant};
 use tauri::async_runtime::TokioRuntime;
 
 use tokio::sync::mpsc::{Receiver, Sender};
@@ -184,6 +184,8 @@ impl ScanJob {
                         debug!("<scan:{}> 执行任务<id:{}>完成", self.id, id);
                     }
                 }
+
+                context.runtime.shutdown_background();
 
                 self.tx
                     .send(ScanMsg::new(
