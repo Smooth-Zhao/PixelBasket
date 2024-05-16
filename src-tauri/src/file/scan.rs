@@ -177,11 +177,12 @@ impl ScanJob {
                 .build()
                 .print_error()
             {
-                if let Some(dbRuntime) = tokio::runtime::Builder::new_current_thread()
+                if let Some(db_runtime) = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
                     .build()
                     .print_error()
                 {
-                    let context = Context { runtime, db_runtime: dbRuntime };
+                    let context = Context { runtime, db_runtime };
                     let mut handles = Vec::new();
                     for task in task_list.iter() {
                         for scanner in self.scanners.iter() {
@@ -200,6 +201,7 @@ impl ScanJob {
                     }
 
                     context.runtime.shutdown_background();
+                    context.db_runtime.shutdown_background();
 
                     self.tx
                         .send(ScanMsg::new(
