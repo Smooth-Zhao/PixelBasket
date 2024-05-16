@@ -156,13 +156,36 @@ pub async fn del_basket(id: String) -> bool {
                 r#"
                 DELETE
                 FROM folder
-                WHERE id IN (SELECT t.folder_id
-                             FROM (SELECT COUNT(bf.folder_id) AS count, bf.folder_id
-                                   FROM basket_folder bf
-                                            LEFT JOIN basket_folder ibf ON ibf.folder_id = bf.folder_id
-                                   WHERE bf.basket_id = {id}
-                                   GROUP BY ibf.folder_id
-                                   HAVING count = 1) t);
+                WHERE id IN (SELECT id
+                             FROM (WITH RECURSIVE descendants AS (SELECT *
+                                                                  FROM folder
+                                                                  WHERE id IN (SELECT bf.folder_id
+                                                                               FROM basket b
+                                                                                        LEFT JOIN basket_folder bf ON bf.basket_id = b.id
+                                                                               WHERE b.id = {id})
+                                                                  UNION ALL
+                                                                  SELECT child.*
+                                                                  FROM folder AS child
+                                                                           JOIN descendants ON child.pid = descendants.id)
+                                   SELECT *
+                                   FROM descendants
+                                   GROUP BY id
+                                   ORDER BY path) f1
+                             WHERE f1.id NOT IN (SELECT id
+                                                 FROM (WITH RECURSIVE descendants AS (SELECT *
+                                                                                      FROM folder
+                                                                                      WHERE id IN (SELECT bf.folder_id
+                                                                                                   FROM basket b
+                                                                                                            LEFT JOIN basket_folder bf ON bf.basket_id = b.id
+                                                                                                   WHERE b.id != {id})
+                                                                                      UNION ALL
+                                                                                      SELECT child.*
+                                                                                      FROM folder AS child
+                                                                                               JOIN descendants ON child.pid = descendants.id)
+                                                       SELECT *
+                                                       FROM descendants
+                                                       GROUP BY id
+                                                       ORDER BY path)))
                 "#
             ))
             .await
