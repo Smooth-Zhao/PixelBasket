@@ -17,7 +17,7 @@ impl RawScanner {
 
 impl Scanner for RawScanner {
     fn is_support(&self, suffix: &str) -> bool {
-        match suffix {
+        match suffix.to_lowercase().as_str() {
             "nef" => true,
             _ => false,
         }

@@ -19,7 +19,7 @@ impl VideoScanner {
 
 impl Scanner for VideoScanner {
     fn is_support(&self, suffix: &str) -> bool {
-        match suffix {
+        match suffix.to_lowercase().as_str() {
             "mp4" | "webm" | "ogg" => true,
             _ => false,
         }

@@ -23,7 +23,7 @@ impl ImageScanner {
 
 impl Scanner for ImageScanner {
     fn is_support(&self, suffix: &str) -> bool {
-        match suffix {
+        match suffix.to_lowercase().as_str() {
             "avif" | "bmp" | "dds" | "farbfeld" | "gif" | "hdr" | "ico" | "jpg" | "jpeg"
             | "exr" | "png" | "pnm" | "qoi" | "tga" | "tiff" | "webp" => true,
             _ => false,
@@ -39,7 +39,7 @@ impl Scanner for ImageScanner {
                 let path = Path::new(path.as_str());
                 let mut metadata = Metadata::load(path);
                 if metadata.analyze_metadata(path).is_ok() {
-                    if analyze_image_metadata(path, &mut metadata).is_ok() {
+                    if analyze_image_metadata(path, &mut metadata).print_error().is_some() {
                         // 使用阻塞线程防止数据丢失！
                         runtime.block_on(async move {
                             metadata.save_to_db().await;

@@ -14,7 +14,7 @@ impl ModelScanner {
 
 impl Scanner for ModelScanner {
     fn is_support(&self, suffix: &str) -> bool {
-        match suffix {
+        match suffix.to_lowercase().as_str() {
             "obj" | "fbx" => true,
             _ => false,
         }

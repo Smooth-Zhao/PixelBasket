@@ -133,8 +133,7 @@ impl ScanJob {
 
     fn is_support(&self, path: &Path) -> bool {
         if let Some(suffix) = get_file_suffix(path) {
-            let string = suffix.to_lowercase();
-            return self.scanners.iter().any(|v| v.is_support(&string));
+            return self.scanners.iter().any(|v| v.is_support(suffix));
         }
         false
     }
