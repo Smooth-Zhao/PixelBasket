@@ -132,11 +132,48 @@ pub async fn del_basket(id: String) -> bool {
         .print_error()
         .is_some()
     {
-        return session
+        let mut result = session
+            .execute(&format!(
+                r#"
+                DELETE
+                FROM metadata
+                WHERE id IN (SELECT m.id
+                             FROM (SELECT COUNT(bf.folder_id) AS count, f.path
+                                   FROM basket_folder bf
+                                            LEFT JOIN basket_folder ibf ON ibf.folder_id = bf.folder_id
+                                            LEFT JOIN folder f ON f.id = bf.folder_id
+                                   WHERE bf.basket_id = {id}
+                                   GROUP BY ibf.folder_id
+                                   HAVING count = 1) t
+                                      LEFT JOIN metadata m ON m.file_path LIKE concat(t.path, '%'))
+                "#
+            ))
+            .await
+            .print_error()
+            .is_some();
+        result &= session
+            .execute(&format!(
+                r#"
+                DELETE
+                FROM folder
+                WHERE id IN (SELECT t.folder_id
+                             FROM (SELECT COUNT(bf.folder_id) AS count, bf.folder_id
+                                   FROM basket_folder bf
+                                            LEFT JOIN basket_folder ibf ON ibf.folder_id = bf.folder_id
+                                   WHERE bf.basket_id = {id}
+                                   GROUP BY ibf.folder_id
+                                   HAVING count = 1) t);
+                "#
+            ))
+            .await
+            .print_error()
+            .is_some();
+        result &= session
             .execute(&format!("DELETE FROM basket_folder WHERE basket_id = {id}"))
             .await
             .print_error()
             .is_some();
+        return result;
     }
     false
 }
