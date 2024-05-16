@@ -9,7 +9,7 @@ import PBFile from "../../entities/PBFile.ts";
 const columnNumber = ref(4)
 
 const {items: selectItems} = useSelection()
-const {files,load} = useContentBrowser()
+const {files} = useContentBrowser()
 
 const handleSelect = (e: PointerEvent, file: PBFile) => {
   if (e.shiftKey) {

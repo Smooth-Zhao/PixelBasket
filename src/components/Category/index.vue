@@ -60,7 +60,7 @@ const nodeProps = ({ option }: { option: TreeOption }) => {
   return {
     onClick () {
       selectedKeys.value = [option.id as string]
-      load(option.path + "\\" as string,false)
+      load(option.path as string,false)
     }
   }
 }
