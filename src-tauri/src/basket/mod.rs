@@ -1,3 +1,5 @@
+use std::ops::Add;
+use std::path::MAIN_SEPARATOR_STR;
 use std::vec;
 
 use serde::{Deserialize, Serialize};
@@ -86,7 +88,7 @@ pub async fn get_metadata_like_path(path: String, like: bool) -> Vec<MetadataVO>
     let sql = format!(
         "SELECT * FROM metadata WHERE file_path {} '{}{}'",
         if like { "LIKE" } else { "=" },
-        path,
+        path.add(MAIN_SEPARATOR_STR),
         if like { "%" } else { "" },
     );
     if let Some(metadata) = session.select_as::<Metadata>(&sql).await.print_error() {

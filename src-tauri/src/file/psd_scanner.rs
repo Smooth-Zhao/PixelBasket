@@ -19,7 +19,7 @@ impl PsdScanner {
 
 impl Scanner for PsdScanner {
     fn is_support(&self, suffix: &str) -> bool {
-        match suffix {
+        match suffix.to_lowercase().as_str() {
             "psd" => true,
             _ => false,
         }
