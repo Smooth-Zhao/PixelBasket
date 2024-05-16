@@ -16,6 +16,7 @@ use crate::{debug, info, Result};
 
 pub struct Context {
     pub runtime: TokioRuntime,
+    pub db_runtime: TokioRuntime,
 }
 
 pub trait Scanner {
@@ -176,39 +177,44 @@ impl ScanJob {
                 .build()
                 .print_error()
             {
-                let context = Context { runtime };
-                let mut handles = Vec::new();
-                for task in task_list.iter() {
-                    for scanner in self.scanners.iter() {
-                        handles.push(scanner.scan(task, &context));
+                if let Some(dbRuntime) = tokio::runtime::Builder::new_current_thread()
+                    .build()
+                    .print_error()
+                {
+                    let context = Context { runtime, db_runtime: dbRuntime };
+                    let mut handles = Vec::new();
+                    for task in task_list.iter() {
+                        for scanner in self.scanners.iter() {
+                            handles.push(scanner.scan(task, &context));
+                        }
                     }
-                }
-                for status in handles {
-                    let id = status.id;
-                    let is_success = status.success().await;
-                    if is_success {
-                        self.scan_count += 1;
-                        let sql = format!("DELETE FROM task WHERE id = {}", id);
-                        session.execute(&sql).await.print_error();
-                        debug!("<scan:{}> 执行任务<id:{}>完成", self.id, id);
+                    for status in handles {
+                        let id = status.id;
+                        let is_success = status.success().await;
+                        if is_success {
+                            self.scan_count += 1;
+                            let sql = format!("DELETE FROM task WHERE id = {}", id);
+                            session.execute(&sql).await.print_error();
+                            debug!("<scan:{}> 执行任务<id:{}>完成", self.id, id);
+                        }
                     }
+
+                    context.runtime.shutdown_background();
+
+                    self.tx
+                        .send(ScanMsg::new(
+                            "done".to_string(),
+                            self.scan_count.to_string(),
+                        ))
+                        .await
+                        .print_error();
+                    info!(
+                        "<scan:{}> 执行{}个任务,代码运行时间为{:?}秒",
+                        self.id,
+                        self.scan_count,
+                        (Instant::now() - start).as_secs()
+                    );
                 }
-
-                context.runtime.shutdown_background();
-
-                self.tx
-                    .send(ScanMsg::new(
-                        "done".to_string(),
-                        self.scan_count.to_string(),
-                    ))
-                    .await
-                    .print_error();
-                info!(
-                    "<scan:{}> 执行{}个任务,代码运行时间为{:?}秒",
-                    self.id,
-                    self.scan_count,
-                    (Instant::now() - start).as_secs()
-                );
             }
         }
     }
