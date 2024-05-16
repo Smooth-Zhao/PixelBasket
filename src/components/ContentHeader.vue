@@ -3,11 +3,13 @@ import { NInput, NIcon} from "naive-ui"
 import {Filter20Filled} from "@vicons/fluent"
 import Filter from "./ContentBrowser/components/FileFilter.vue"
 import {ref} from "vue";
+import useFolder from "../hooks/useFolder.ts";
 
 const expand = ref(false)
 const handleFilterExpand = () => {
   expand.value = !expand.value
 }
+const folder = useFolder()
 </script>
 
 <template>

@@ -7,12 +7,13 @@ const files = ref<PBFile[]>([])
 const useContentBrowser = () => {
   return {
     load,
-    files
+    files,
+    isLoadChildren
   }
 }
-
-const load = async (path:string,like=true) => {
-  files.value = await invoke<PBFile[]>("get_metadata_like_path",{path,like})
+const isLoadChildren = ref<boolean>(false)
+const load = async (path: string) => {
+  files.value = await invoke<PBFile[]>("get_metadata_like_path", {path, like: isLoadChildren.value})
 }
 
 export default useContentBrowser

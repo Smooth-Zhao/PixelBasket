@@ -6,7 +6,8 @@ import {ref} from "vue";
 import FilePreview from "./FilePreview.vue";
 import useSelection from "../../../hooks/useSelection.ts";
 import PBFile from "../../../entities/PBFile.ts";
-import {openFile} from "../../../utils";
+import {openFile,compareType,msToTime} from "../../../utils";
+
 
 const props = defineProps<{
   file: PBFile
@@ -32,7 +33,14 @@ const handleMouse = (e: MouseEvent) => {
       <n-ellipsis style="max-width:100%">
         {{ file.fileName }}.{{ file.fileSuffix }}
       </n-ellipsis>
-      <span class="resolution">{{ file.imageWidth }} * {{ file.imageHeight }}</span>
+      <span class="resolution">
+        <template v-if="compareType(file.fileSuffix, 'image')">
+          {{ file.imageWidth }} * {{ file.imageHeight }}
+        </template>
+        <template v-if="compareType(file.fileSuffix, 'video')">
+          {{msToTime(file.duration)}}
+        </template>
+      </span>
     </div>
   </div>
 </template>

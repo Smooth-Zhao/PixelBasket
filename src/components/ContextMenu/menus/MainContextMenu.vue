@@ -59,6 +59,15 @@ const handleSwitchBasket = async (item: Basket) => {
   await folder.load(item.id)
   await contentBrowser.load(folder.folderTree.value[0].path)
 }
+
+const handleDeleteBasket = async () => {
+  if (!currentBasket.value) {
+    return
+  }
+  await invoke("del_basket", {
+    id: currentBasket.value.id
+  })
+}
 </script>
 
 <template>
@@ -86,6 +95,15 @@ const handleSwitchBasket = async (item: Basket) => {
                   </n-icon>
                 </template>
                 {{ item.name }}
+              </context-menu-item>
+            </context-menu-group>
+
+            <context-menu-group>
+              <context-menu-item>
+                修改关联文件夹
+              </context-menu-item>
+              <context-menu-item @click="handleDeleteBasket">
+                <span style="color: red;">删除当前篮子</span>
               </context-menu-item>
             </context-menu-group>
           </div>

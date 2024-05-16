@@ -5,8 +5,8 @@ import {
   BoxDismiss20Regular, Delete20Regular,
   TagDismiss20Regular, TagMultiple20Regular
 } from "@vicons/fluent"
-import {NIcon, TreeOption,NTree} from "naive-ui"
-import {ref,h} from "vue";
+import {NIcon, TreeOption,NTree,NScrollbar} from "naive-ui"
+import {ref, h, computed} from "vue";
 import {FolderOpenOutline, FolderOutline} from "@vicons/ionicons5";
 import MenuButton from "./components/HeaderButton/Menu.vue"
 import useFolder from "../../hooks/useFolder.ts";
@@ -55,12 +55,13 @@ const renderSwitcherIconWithExpanded = ({ expanded }: { expanded: boolean }) =>
     default: () => h(expanded ? FolderOpenOutline : FolderOutline)
   })
 const {load} = useContentBrowser()
-const selectedKeys = ref<string[]>([])
+const selectedKeys = computed(() => [folder.currentFolder.value])
+const folder = useFolder()
 const nodeProps = ({ option }: { option: TreeOption }) => {
   return {
     onClick () {
-      selectedKeys.value = [option.id as string]
-      load(option.path as string,false)
+      load(option.path as string)
+      folder.currentFolder.value = option.path as string
     }
   }
 }
@@ -88,24 +89,29 @@ const {folderTree} = useFolder()
     </ul>
 
     <div class="folder">
-      <n-tree
-        ref="treeRef"
-        show-line
-        key-field="id"
-        label-field="name"
-        :selected-keys="selectedKeys"
-        :data="folderTree"
-        :node-props="nodeProps"
-        :render-switcher-icon="renderSwitcherIconWithExpanded"
-      />
+      <n-scrollbar>
+        <n-tree
+          ref="treeRef"
+          show-line
+          key-field="path"
+          label-field="name"
+          :selected-keys="selectedKeys"
+          :data="folderTree"
+          :node-props="nodeProps"
+          :render-switcher-icon="renderSwitcherIconWithExpanded"
+        />
+      </n-scrollbar>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .category {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   .header {
-    height: 40px;
+    flex: 0 0 40px;
     padding: 0 16px;
     display: flex;
     align-items: center;
@@ -126,6 +132,7 @@ const {folderTree} = useFolder()
 .folder{
   padding: 8px;
   overflow: auto;
+  flex: 1 1 auto;
 }
 .category-list {
   list-style: none;

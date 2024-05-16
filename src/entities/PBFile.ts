@@ -18,5 +18,5 @@ export default class PBFile {
   added = ""
   created = ""
   modified = ""
-
+  duration = 0
 }
