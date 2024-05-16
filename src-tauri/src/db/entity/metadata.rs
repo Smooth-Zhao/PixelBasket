@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io::Error as IoError;
 use std::ops::Add;
-use std::path::Path;
+use std::path::{Path, MAIN_SEPARATOR_STR};
 
 use chrono::{DateTime, Local};
 use file_hashing::get_hash_file;
@@ -78,21 +78,21 @@ impl Metadata {
                 metadata.file_suffix = file_suffix.to_string();
             }
         }
-        let mut name = String::new();
         if let Some(file_name) = path.file_name() {
             if let Some(file_name) = file_name.to_str() {
-                name = file_name.to_string();
                 let re = format!("{}$", suffix);
                 if let Some(re) = Regex::new(re.as_str()).print_error() {
                     metadata.file_name = re.replace(file_name, "".to_string()).to_string();
                 }
             }
         }
+
         if let Some(file_path) = path.to_str() {
             metadata.full_path = file_path.to_string();
-            let re = format!("{}$", name);
-            if let Some(re) = Regex::new(re.as_str()).print_error() {
-                metadata.file_path = re.replace(file_path, "".to_string()).to_string();
+            if let Some(path) = path.parent() {
+                if let Some(file_path) = path.to_str() {
+                    metadata.file_path = file_path.to_string().add(MAIN_SEPARATOR_STR);
+                }
             }
         }
         metadata
