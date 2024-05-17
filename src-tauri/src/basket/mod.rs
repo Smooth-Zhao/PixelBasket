@@ -152,7 +152,7 @@ pub async fn del_basket(id: String) -> bool {
             .print_error()
             .is_some();
         result &= session
-            .execute(&format!(
+            .execute(&format!("
                 r#"
                 DELETE
                 FROM folder
@@ -160,9 +160,8 @@ pub async fn del_basket(id: String) -> bool {
                              FROM (WITH RECURSIVE descendants AS (SELECT *
                                                                   FROM folder
                                                                   WHERE id IN (SELECT bf.folder_id
-                                                                               FROM basket b
-                                                                                        LEFT JOIN basket_folder bf ON bf.basket_id = b.id
-                                                                               WHERE b.id = {id})
+                                                                               FROM basket_folder bf
+                                                                               WHERE bf.basket_id = {id})
                                                                   UNION ALL
                                                                   SELECT child.*
                                                                   FROM folder AS child
@@ -175,9 +174,8 @@ pub async fn del_basket(id: String) -> bool {
                                                  FROM (WITH RECURSIVE descendants AS (SELECT *
                                                                                       FROM folder
                                                                                       WHERE id IN (SELECT bf.folder_id
-                                                                                                   FROM basket b
-                                                                                                            LEFT JOIN basket_folder bf ON bf.basket_id = b.id
-                                                                                                   WHERE b.id != {id})
+                                                                                                   FROM basket_folder bf
+                                                                                                   WHERE bf.basket_id != {id})
                                                                                       UNION ALL
                                                                                       SELECT child.*
                                                                                       FROM folder AS child
@@ -187,7 +185,7 @@ pub async fn del_basket(id: String) -> bool {
                                                        GROUP BY id
                                                        ORDER BY path)))
                 "#
-            ))
+            "))
             .await
             .print_error()
             .is_some();
