@@ -152,7 +152,7 @@ pub async fn del_basket(id: String) -> bool {
             .print_error()
             .is_some();
         result &= session
-            .execute(&format!("
+            .execute(&format!(
                 r#"
                 DELETE
                 FROM folder
@@ -185,7 +185,7 @@ pub async fn del_basket(id: String) -> bool {
                                                        GROUP BY id
                                                        ORDER BY path)))
                 "#
-            "))
+            ))
             .await
             .print_error()
             .is_some();
