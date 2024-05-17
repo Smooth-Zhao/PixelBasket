@@ -6,7 +6,7 @@ import {h, ref} from "vue";
 import Basket from "../../../entities/Basket.ts";
 import {invoke} from "@tauri-apps/api";
 import BasketEditor from "../../BasketEditor.vue";
-import {useMessage, useModal} from "naive-ui";
+import {useDialog, useMessage, useModal} from "naive-ui";
 import {IContextMenuProps} from "../createContextMenu.ts";
 import useBasket from "../../../hooks/useBasket.ts";
 import {NIcon} from "naive-ui";
@@ -18,7 +18,13 @@ defineProps<IContextMenuProps<any>>()
 
 const modal = useModal()
 const message = useMessage()
+const dialog = useDialog()
 const basket = ref(new Basket())
+
+const {baskets, currentBasket,init} = useBasket()
+const folder = useFolder()
+const contentBrowser = useContentBrowser()
+
 const onCreateBasket = (): void => {
   basket.value = new Basket()
   modal.create({
@@ -51,9 +57,43 @@ const onCreateBasket = (): void => {
     preset: 'dialog'
   })
 }
-const {baskets, currentBasket} = useBasket()
-const folder = useFolder()
-const contentBrowser = useContentBrowser()
+
+
+const onEditBasket = (): void => {
+  modal.create({
+    title: '编辑篮子',
+    style: {
+      width: "600px"
+    },
+    positiveText: "保存",
+    async onPositiveClick() {
+      if (!currentBasket.value) return
+
+      if (!currentBasket.value.name) {
+        message.error("请输入篮子名称")
+        return false
+      }
+      if (currentBasket.value.directories.size <= 0) {
+        message.error("选择关联文件夹")
+        return false
+      }
+      await invoke("update_basket", {
+        basket: {
+          id: currentBasket.value.id,
+          name: currentBasket.value.name,
+          directories: Array.from(currentBasket.value.directories)
+        }
+      })
+    },
+    showIcon: false,
+    maskClosable: false,
+    content: () => h(BasketEditor, {
+      basket: currentBasket.value
+    }),
+    preset: 'dialog'
+  })
+}
+
 const handleSwitchBasket = async (item: Basket) => {
   currentBasket.value = item
   await folder.load(item.id)
@@ -61,11 +101,32 @@ const handleSwitchBasket = async (item: Basket) => {
 }
 
 const handleDeleteBasket = async () => {
-  if (!currentBasket.value) {
-    return
-  }
-  await invoke("del_basket", {
-    id: currentBasket.value.id
+  const d = dialog.warning({
+    title: '警告',
+    content: '删除后无法恢复，确认删除当前篮子？',
+    positiveText: '确认',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      d.loading = true
+      if (!currentBasket.value) {
+        return
+      }
+      const result = await invoke("del_basket", {
+        id: currentBasket.value.id
+      })
+      console.log(`【delete result】`,result)
+      message.success("删除成功")
+      await init()
+      if (!currentBasket.value) {
+        folder.folderTree.value = []
+        folder.currentFolder.value = ""
+        contentBrowser.files.value = []
+        return
+      }
+      await folder.load(currentBasket.value.id)
+      await contentBrowser.load(folder.folderTree.value[0].path)
+    },
+    onNegativeClick: () => {}
   })
 }
 </script>
@@ -99,7 +160,7 @@ const handleDeleteBasket = async () => {
             </context-menu-group>
 
             <context-menu-group>
-              <context-menu-item>
+              <context-menu-item @click="onEditBasket">
                 修改关联文件夹
               </context-menu-item>
               <context-menu-item @click="handleDeleteBasket">

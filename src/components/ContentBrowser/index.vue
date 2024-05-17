@@ -95,7 +95,7 @@ onUnmounted(() => {
 .content-browser {
   min-height: 100%;
   display: grid;
-  grid-template-columns: repeat(v-bind(columnNumber), 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 16px;
   align-content: flex-start;
   transition: all .2s ease;
