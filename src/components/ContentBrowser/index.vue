@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {onMounted, onUnmounted, ref} from "vue";
+import {onMounted, onUnmounted} from "vue";
 import {NScrollbar} from "naive-ui"
 import FileItem from "./components/FileItem.vue";
 import useSelection from "../../hooks/useSelection.ts";
 import useContentBrowser from "../../hooks/useContentBrowser.ts";
 import PBFile from "../../entities/PBFile.ts";
 
-const columnNumber = ref(4)
+// const columnNumber = ref(4)
 
 const {items: selectItems} = useSelection()
 const {files} = useContentBrowser()
