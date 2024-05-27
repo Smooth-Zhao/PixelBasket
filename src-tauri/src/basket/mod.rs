@@ -7,6 +7,7 @@ use tokio::sync::mpsc::channel;
 
 use crate::config::get_db_path;
 use crate::db::entity::basket::{Basket, BasketData, BasketVO};
+use crate::db::entity::config::Config;
 use crate::db::entity::folder::{Folder, FolderVO};
 use crate::db::entity::metadata::{Metadata, MetadataVO};
 use crate::db::sqlite::Session;
@@ -228,4 +229,32 @@ pub async fn get_folder(id: String) -> Vec<FolderVO> {
         return folder.into_iter().map(|v| FolderVO::from(v)).collect();
     }
     Vec::new()
+}
+
+#[tauri::command]
+pub async fn save_config(config: Config) {
+    let mut session = Session::new(get_db_path());
+    session.connect().await;
+    config.save(&session).await;
+}
+
+#[tauri::command]
+pub async fn update_config(config: Config) {
+    let mut session = Session::new(get_db_path());
+    session.connect().await;
+    config.update(&session).await;
+}
+
+#[tauri::command]
+pub async fn get_config(key: String) -> Option<Config> {
+    let mut session = Session::new(get_db_path());
+    session.connect().await;
+    Config::get(key, &session).await
+}
+
+#[tauri::command]
+pub async fn del_config(key: String) {
+    let mut session = Session::new(get_db_path());
+    session.connect().await;
+    Config::delete(key, &session).await;
 }

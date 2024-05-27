@@ -21,7 +21,11 @@ async fn main() {
             basket::get_basket,
             basket::del_basket,
             basket::get_folder,
-            basket::run_task
+            basket::run_task,
+            basket::save_config,
+            basket::update_config,
+            basket::get_config,
+            basket::del_config,
         ])
         .setup(move |app| {
             // 设置 AppHandle 的值
