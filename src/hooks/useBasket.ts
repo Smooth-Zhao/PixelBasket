@@ -14,6 +14,10 @@ const useBasket = function () {
 
 const init = async () => {
   baskets.value = await invoke<Basket[]>("get_basket", {})
+  if (baskets.value.length > 0)
+    currentBasket.value = baskets.value[0]
+  else
+    currentBasket.value = undefined
 }
 
 export default useBasket

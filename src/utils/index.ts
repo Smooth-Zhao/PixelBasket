@@ -139,3 +139,25 @@ export function arrayToTree<T extends { id: string }>(arr: T[], key: keyof T) {
 
   return roots;
 }
+
+/**
+ * 将毫秒数转成时长字符串
+ * @param ms
+ */
+export function msToTime(ms: number): string {
+  const second = Math.floor(ms / 1000);
+  const minute = Math.floor(second / 60);
+  const hour = Math.floor(minute / 60);
+
+  const secondStr = (second % 60).toString().padStart(2, '0');
+  const minuteStr = (minute % 60).toString().padStart(2, '0');
+
+  let result = '';
+
+  if (hour > 0) {
+    result += `${hour}:${minuteStr}:${secondStr}`;
+  } else {
+    result += `${minuteStr}:${secondStr}`;
+  }
+  return result;
+}
