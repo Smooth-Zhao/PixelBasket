@@ -1,6 +1,7 @@
-use crate::debug;
+use sqlx::{FromRow, Pool, query, query_as, Sqlite, SqlitePool};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult, SqliteRow};
-use sqlx::{query, query_as, FromRow, Pool, Sqlite, SqlitePool};
+
+use crate::debug;
 
 /// 数据库会话
 pub struct Session {
@@ -12,7 +13,7 @@ impl Session {
     /// 使用url创建数据库会话
     ///
     /// ```rust,no_run
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let session = Session::new("test.db");
     /// # }
@@ -27,7 +28,7 @@ impl Session {
     /// 获取连接池
     ///
     /// ```rust,no_run
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
@@ -55,7 +56,7 @@ impl Session {
     /// 建立连接
     ///
     /// ```rust,no_run
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// session.connect().await;
@@ -71,7 +72,7 @@ impl Session {
     /// 执行语句
     ///
     /// ```rust,no_run
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
@@ -93,7 +94,7 @@ impl Session {
     /// ```rust,no_run
     /// use sqlx::sqlite::SqliteRow;
     ///
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
@@ -119,7 +120,7 @@ impl Session {
     ///    // ...
     /// }
     ///
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
@@ -143,7 +144,7 @@ impl Session {
     /// ```rust,no_run
     /// use sqlx::sqlite::SqliteRow;
     ///
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
@@ -169,7 +170,7 @@ impl Session {
     ///    // ...
     /// }
     ///
-    /// # use pixel_basket::db::sqlite::Session;
+    /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
@@ -193,7 +194,7 @@ impl Session {
     /// ```rust,no_run
     /// use sqlx::sqlite::SqliteRow;
     ///
-    /// # use pixel_basket::db::sqlite::{Count, Session};
+    /// # use pixel_basket::util::sqlite::{Count, Session};
     /// # async fn example() {
     /// let mut session = Session::new("test.db");
     /// // 先建立连接
@@ -212,9 +213,10 @@ impl Session {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::{get_db_path, DB};
-    use crate::db::sqlite::Session;
     use sqlx::query;
+
+    use crate::config::get_db_path;
+    use crate::util::sqlite::Session;
 
     #[derive(Debug, sqlx::FromRow)]
     struct User {

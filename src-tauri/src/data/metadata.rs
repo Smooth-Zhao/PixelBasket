@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::io::Error as IoError;
 use std::ops::Add;
-use std::path::{Path, MAIN_SEPARATOR_STR};
+use std::path::{MAIN_SEPARATOR_STR, Path};
 
 use chrono::{DateTime, Local};
 use file_hashing::get_hash_file;
@@ -11,9 +11,9 @@ use sha1::{Digest, Sha1};
 use sqlx::query;
 
 use crate::config::get_db_path;
-use crate::db::sqlite::Session;
 use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id;
+use crate::util::sqlite::Session;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct Metadata {
@@ -120,7 +120,7 @@ impl Metadata {
                         "SELECT COUNT(*) AS count FROM metadata WHERE sha1 = '{}'",
                         &self.sha1
                     )
-                    .as_str(),
+                        .as_str(),
                 )
                 .await
             {
@@ -163,7 +163,7 @@ impl Metadata {
                         "SELECT COUNT(*) AS count FROM task WHERE file_path = '{}'",
                         &self.full_path
                     )
-                    .as_str(),
+                        .as_str(),
                 )
                 .await
             {
@@ -171,12 +171,12 @@ impl Metadata {
                     let _ = query(
                         "INSERT INTO task (id, file_path, file_suffix, status) VALUES (?, ?, ?, ?)",
                     )
-                    .bind(id::<i64>())
-                    .bind(&self.full_path)
-                    .bind(&self.file_suffix)
-                    .bind(0)
-                    .execute(pool)
-                    .await;
+                        .bind(id::<i64>())
+                        .bind(&self.full_path)
+                        .bind(&self.file_suffix)
+                        .bind(0)
+                        .execute(pool)
+                        .await;
                 }
             }
         }

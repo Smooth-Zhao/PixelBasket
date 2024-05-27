@@ -1,17 +1,17 @@
 use std::io::Cursor;
 use std::path::Path;
 
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use image::{DynamicImage, GenericImageView, ImageFormat, RgbImage};
-use kmeans_colors::{get_kmeans_hamerly, Calculate, CentroidData, Sort};
-use palette::cast::ComponentsAs;
+use kmeans_colors::{Calculate, CentroidData, get_kmeans_hamerly, Sort};
 use palette::{FromColor, IntoColor, Srgb};
+use palette::cast::ComponentsAs;
 
-use crate::db::entity::metadata::Metadata;
-use crate::db::entity::task::{Task, TaskStatus};
-use crate::file::scan::{Context, Scanner};
-use crate::util::error::ErrorHandle;
+use crate::data::metadata::Metadata;
+use crate::data::task::{Task, TaskStatus};
 use crate::Result;
+use crate::scanner::scan::{Context, Scanner};
+use crate::util::error::ErrorHandle;
 
 pub struct ImageScanner {}
 

@@ -1,18 +1,18 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
-use tauri::async_runtime::TokioRuntime;
 
+use tauri::async_runtime::TokioRuntime;
 use tokio::sync::mpsc::{Receiver, Sender};
 
+use crate::{debug, info, Result};
 use crate::config::get_db_path;
-use crate::db::entity::basket::{Basket, BasketData};
-use crate::db::entity::folder::Folder;
-use crate::db::entity::metadata::Metadata;
-use crate::db::entity::task::{Task, TaskStatus};
-use crate::db::sqlite::Session;
+use crate::data::basket::{Basket, BasketData};
+use crate::data::folder::Folder;
+use crate::data::metadata::Metadata;
+use crate::data::task::{Task, TaskStatus};
 use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id_str;
-use crate::{debug, info, Result};
+use crate::util::sqlite::Session;
 
 pub struct Context {
     pub runtime: TokioRuntime,
@@ -103,7 +103,7 @@ impl ScanJob {
         });
         self.tx
             .send(ScanMsg::new(
-                "file".to_string(),
+                "scanner".to_string(),
                 self.file_count.to_string(),
             ))
             .await

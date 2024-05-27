@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 use sqlx::query;
 
-use crate::db::entity::folder::Folder;
-use crate::db::sqlite::Session;
+use crate::data::folder::Folder;
 use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id;
+use crate::util::sqlite::Session;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct Basket {
@@ -43,7 +43,7 @@ impl Basket {
                     "SELECT COUNT(*) AS count FROM basket WHERE name = '{}'",
                     &self.name
                 )
-                .as_str(),
+                    .as_str(),
             )
             .await
         {
@@ -87,14 +87,14 @@ impl Basket {
                         let basket_folder = BasketFolder::new(basket.id, folder.id);
                         if !basket_folder.exist(&session).await {
                             query(
-                            "INSERT INTO basket_folder (id, basket_id, folder_id) VALUES (?, ?, ?)",
-                        )
-                        .bind(&basket_folder.id)
-                        .bind(&basket_folder.basket_id)
-                        .bind(&basket_folder.folder_id)
-                        .execute(pool)
-                        .await
-                        .print_error();
+                                "INSERT INTO basket_folder (id, basket_id, folder_id) VALUES (?, ?, ?)",
+                            )
+                                .bind(&basket_folder.id)
+                                .bind(&basket_folder.basket_id)
+                                .bind(&basket_folder.folder_id)
+                                .execute(pool)
+                                .await
+                                .print_error();
                         }
                     }
                 }
@@ -119,7 +119,7 @@ impl BasketFolder {
                     "SELECT COUNT(*) AS count FROM basket_folder WHERE basket_id = {} AND folder_id = {}",
                     &self.basket_id, &self.folder_id
                 )
-                .as_str(),
+                    .as_str(),
             )
             .await
         {

@@ -1,5 +1,6 @@
-use crate::debug;
 use tauri::AppHandle;
+
+use crate::debug;
 
 pub static mut DB: String = String::new();
 

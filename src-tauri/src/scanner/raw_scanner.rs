@@ -2,10 +2,10 @@ use std::collections::HashMap;
 use std::path::Path;
 use std::process::Command;
 
-use crate::db::entity::metadata::Metadata;
-use crate::db::entity::task::{Task, TaskStatus};
-use crate::file::scan::{Context, Scanner};
+use crate::data::metadata::Metadata;
+use crate::data::task::{Task, TaskStatus};
 use crate::Result;
+use crate::scanner::scan::{Context, Scanner};
 
 pub struct RawScanner {}
 
@@ -69,6 +69,7 @@ fn analyze_raw_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     // metadata.shape = calculated_shape(metadata.image_width, metadata.image_height);
     Ok(())
 }
+
 /// 生成图片缩咯图
 fn thumbnail(path: &Path) -> Result<String> {
     // 调用 bin/raw2base64.exe
@@ -87,6 +88,7 @@ fn thumbnail(path: &Path) -> Result<String> {
         String::from_utf8(buffer).unwrap()
     ))
 }
+
 fn get_exif_data(path: &Path) -> serde_json::Result<String> {
     let image = rawloader::decode_file(path.to_str().unwrap()).expect("error loading image");
 

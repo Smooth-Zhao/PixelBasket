@@ -1,12 +1,12 @@
-use snowflaked::sync::Generator;
 use snowflaked::Snowflake;
+use snowflaked::sync::Generator;
 
 static GENERATOR: Generator = Generator::new(0);
 
 #[allow(dead_code)]
 pub fn id<T>() -> T
-where
-    T: Snowflake,
+    where
+        T: Snowflake,
 {
     GENERATOR.generate::<T>()
 }

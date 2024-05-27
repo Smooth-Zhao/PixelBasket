@@ -3,9 +3,9 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 use sqlx::query;
 
-use crate::db::sqlite::Session;
 use crate::util::error::ErrorHandle;
 use crate::util::snowflake::id;
+use crate::util::sqlite::Session;
 
 #[derive(Serialize, Deserialize, Debug, sqlx::FromRow)]
 pub struct Folder {
@@ -49,7 +49,7 @@ impl Folder {
                     "SELECT COUNT(*) AS count FROM folder WHERE path = '{}'",
                     &self.path
                 )
-                .as_str(),
+                    .as_str(),
             )
             .await
         {
@@ -91,7 +91,7 @@ impl Folder {
                     "SELECT COUNT(*) AS count FROM folder WHERE path = '{}'",
                     path
                 )
-                .as_str(),
+                    .as_str(),
             )
             .await
         {

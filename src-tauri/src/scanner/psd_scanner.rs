@@ -3,11 +3,11 @@ use std::path::Path;
 use image::{DynamicImage, EncodableLayout, ImageBuffer, Rgba};
 use psd::Psd;
 
-use crate::db::entity::metadata::Metadata;
-use crate::db::entity::task::{Task, TaskStatus};
-use crate::file::image_scanner::image_to_base64;
-use crate::file::scan::{Context, Scanner};
+use crate::data::metadata::Metadata;
+use crate::data::task::{Task, TaskStatus};
 use crate::Result;
+use crate::scanner::image_scanner::image_to_base64;
+use crate::scanner::scan::{Context, Scanner};
 
 pub struct PsdScanner {}
 
@@ -74,7 +74,7 @@ fn analyze_psd_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
 
     let image = DynamicImage::ImageRgba8(image_buffer);
     let resize_image = if metadata.image_width > 200 {
-        crate::file::image_scanner::thumbnail(&image, metadata.image_width, metadata.image_height)
+        crate::scanner::image_scanner::thumbnail(&image, metadata.image_width, metadata.image_height)
     } else {
         image.to_rgb8()
     };

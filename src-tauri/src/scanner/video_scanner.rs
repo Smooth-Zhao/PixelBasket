@@ -4,10 +4,10 @@ use std::process::Command;
 use base64::Engine;
 use base64::engine::general_purpose;
 
-use crate::db::entity::metadata::Metadata;
-use crate::db::entity::task::{Task, TaskStatus};
-use crate::file::scan::{Context, Scanner};
+use crate::data::metadata::Metadata;
+use crate::data::task::{Task, TaskStatus};
 use crate::Result;
+use crate::scanner::scan::{Context, Scanner};
 
 pub struct VideoScanner {}
 
@@ -49,6 +49,7 @@ impl Scanner for VideoScanner {
         status
     }
 }
+
 fn analyze_video_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     metadata.duration = duration(path)?;
     metadata.thumbnail = thumbnail(path)?;
@@ -57,7 +58,7 @@ fn analyze_video_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
 }
 
 
-fn duration(path: &Path) -> Result<i64>{
+fn duration(path: &Path) -> Result<i64> {
     // 定义 FFmpeg 命令
     let output = Command::new("ffprobe")
         .args(&[
@@ -72,6 +73,7 @@ fn duration(path: &Path) -> Result<i64>{
     let duration: f64 = duration_str.trim().parse()?;
     Ok((duration * 1000f64) as i64)
 }
+
 /// 生成缩咯图
 fn thumbnail(path: &Path) -> Result<String> {
     // 定义 ffmpeg 命令
