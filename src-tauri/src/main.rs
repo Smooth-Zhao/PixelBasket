@@ -1,5 +1,6 @@
 use pixel_basket::run;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     run()
 }

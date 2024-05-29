@@ -1,5 +1,6 @@
 use std::io::Cursor;
-use std::path::Path;
+use std::ops::Add;
+use std::path::{Path, PathBuf};
 
 use base64::{Engine as _, engine::general_purpose};
 use image::{DynamicImage, GenericImageView, ImageFormat, RgbImage};
@@ -12,6 +13,7 @@ use crate::data::task::{Task, TaskStatus};
 use crate::Result;
 use crate::scanner::scan::{Context, Scanner};
 use crate::util::error::ErrorHandle;
+use crate::util::snowflake::id_str;
 
 pub struct ImageScanner {}
 
@@ -36,11 +38,12 @@ impl Scanner for ImageScanner {
             let path = task.file_path.clone();
             let runtime = context.runtime.handle().clone();
             let db_runtime = context.db_runtime.handle().clone();
+            let mut cache_path = context.cache_path.clone();
             status.handle(runtime.clone().spawn_blocking(move || {
                 let path = Path::new(path.as_str());
                 let mut metadata = Metadata::load(path);
                 if metadata.analyze_metadata(path).is_ok() {
-                    if analyze_image_metadata(path, &mut metadata)
+                    if analyze_image_metadata(path, &mut cache_path, &mut metadata)
                         .print_error()
                         .is_some()
                     {
@@ -59,7 +62,11 @@ impl Scanner for ImageScanner {
 }
 
 /// 解析图片元数据
-fn analyze_image_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
+fn analyze_image_metadata(
+    path: &Path,
+    cache_path: &mut PathBuf,
+    metadata: &mut Metadata,
+) -> Result<()> {
     let image = image::open(path)?;
     let dimensions = image.dimensions();
     metadata.image_width = dimensions.0;
@@ -69,9 +76,9 @@ fn analyze_image_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
     } else {
         image.to_rgb8()
     };
-    if let Some(base64) = image_to_base64(&resize_image) {
-        metadata.thumbnail = base64;
-    }
+    cache_path.push(id_str().add(".thumbnail"));
+    resize_image.save_with_format(&cache_path, ImageFormat::Jpeg)?;
+    metadata.thumbnail = cache_path.to_string_lossy().to_string();
     metadata.colors = kmeans(&resize_image);
     metadata.shape = calculated_shape(metadata.image_width, metadata.image_height);
     Ok(())

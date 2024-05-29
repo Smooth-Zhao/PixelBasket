@@ -5,7 +5,7 @@ use tauri::async_runtime::TokioRuntime;
 use tokio::sync::mpsc::{Receiver, Sender};
 
 use crate::{debug, info, Result};
-use crate::config::get_db_path;
+use crate::config::{get_cache_path, get_db_path};
 use crate::data::basket::{Basket, BasketData};
 use crate::data::folder::Folder;
 use crate::data::metadata::Metadata;
@@ -15,6 +15,7 @@ use crate::util::snowflake::id_str;
 use crate::util::sqlite::Session;
 
 pub struct Context {
+    pub cache_path: PathBuf,
     pub runtime: TokioRuntime,
     pub db_runtime: TokioRuntime,
 }
@@ -182,7 +183,11 @@ impl ScanJob {
                     .build()
                     .print_error()
                 {
-                    let context = Context { runtime, db_runtime };
+                    let context = Context {
+                        cache_path: PathBuf::from(get_cache_path()),
+                        runtime,
+                        db_runtime,
+                    };
                     let mut handles = Vec::new();
                     for task in task_list.iter() {
                         for scanner in self.scanners.iter() {

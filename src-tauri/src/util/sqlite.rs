@@ -1,5 +1,5 @@
-use sqlx::{FromRow, Pool, query, query_as, Sqlite, SqlitePool};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteQueryResult, SqliteRow};
+use sqlx::{query, query_as, FromRow, Pool, Sqlite, SqlitePool};
 
 use crate::debug;
 
@@ -15,12 +15,12 @@ impl Session {
     /// ```rust,no_run
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let session = Session::new("test.db");
+    /// let session = Session::new("test.db".to_string());
     /// # }
     /// ```
-    pub fn new(url: &str) -> Session {
+    pub fn new(url: String) -> Session {
         Session {
-            url: url.to_string(),
+            url,
             pool: None,
         }
     }
@@ -30,7 +30,7 @@ impl Session {
     /// ```rust,no_run
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// // 先建立连接
     /// session.connect().await;
     ///
@@ -58,7 +58,7 @@ impl Session {
     /// ```rust,no_run
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// session.connect().await;
     /// # }
     /// ```
@@ -74,7 +74,7 @@ impl Session {
     /// ```rust,no_run
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// // 先建立连接
     /// session.connect().await;
     ///
@@ -96,7 +96,7 @@ impl Session {
     ///
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// // 先建立连接
     /// session.connect().await;
     ///
@@ -122,7 +122,7 @@ impl Session {
     ///
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// // 先建立连接
     /// session.connect().await;
     ///
@@ -146,7 +146,7 @@ impl Session {
     ///
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// // 先建立连接
     /// session.connect().await;
     ///
@@ -172,7 +172,7 @@ impl Session {
     ///
     /// # use pixel_basket::util::sqlite::Session;
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// // 先建立连接
     /// session.connect().await;
     ///
@@ -196,7 +196,7 @@ impl Session {
     ///
     /// # use pixel_basket::util::sqlite::{Count, Session};
     /// # async fn example() {
-    /// let mut session = Session::new("test.db");
+    /// let mut session = Session::new("test.db".to_string());
     /// // 先建立连接
     /// session.connect().await;
     ///
