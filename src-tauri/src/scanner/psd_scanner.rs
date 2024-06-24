@@ -1,13 +1,14 @@
-use std::path::Path;
+use std::ops::Add;
+use std::path::{Path, PathBuf};
 
-use image::{DynamicImage, EncodableLayout, ImageBuffer, Rgba};
+use image::{DynamicImage, EncodableLayout, ImageBuffer, ImageFormat, Rgba};
 use psd::Psd;
 
 use crate::data::metadata::Metadata;
 use crate::data::task::{Task, TaskStatus};
 use crate::Result;
-use crate::scanner::image_scanner::image_to_base64;
 use crate::scanner::scan::{Context, Scanner};
+use crate::util::snowflake::id_str;
 
 pub struct PsdScanner {}
 
@@ -31,11 +32,12 @@ impl Scanner for PsdScanner {
             let path = task.file_path.clone();
             let runtime = context.runtime.handle().clone();
             let db_runtime = context.db_runtime.handle().clone();
+            let mut cache_path = context.cache_path.clone();
             status.handle(runtime.clone().spawn_blocking(move || {
                 let path = Path::new(path.as_str());
                 let mut metadata = Metadata::load(path);
                 if metadata.analyze_metadata(path).is_ok() {
-                    if analyze_psd_metadata(path, &mut metadata).is_ok() {
+                    if analyze_psd_metadata(path, &mut cache_path, &mut metadata).is_ok() {
                         // 使用阻塞线程防止数据丢失！
                         db_runtime.block_on(async move {
                             metadata.save_to_db().await;
@@ -51,7 +53,11 @@ impl Scanner for PsdScanner {
 }
 
 /// 解析图片元数据
-fn analyze_psd_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
+fn analyze_psd_metadata(
+    path: &Path,
+    cache_path: &mut PathBuf,
+    metadata: &mut Metadata,
+) -> Result<()> {
     let psd = Psd::from_bytes(std::fs::read(path).unwrap().as_bytes()).unwrap();
     metadata.image_width = psd.width();
     metadata.image_height = psd.height();
@@ -74,13 +80,17 @@ fn analyze_psd_metadata(path: &Path, metadata: &mut Metadata) -> Result<()> {
 
     let image = DynamicImage::ImageRgba8(image_buffer);
     let resize_image = if metadata.image_width > 200 {
-        crate::scanner::image_scanner::thumbnail(&image, metadata.image_width, metadata.image_height)
+        crate::scanner::image_scanner::thumbnail(
+            &image,
+            metadata.image_width,
+            metadata.image_height,
+        )
     } else {
         image.to_rgb8()
     };
-    if let Some(base64) = image_to_base64(&resize_image) {
-        metadata.thumbnail = base64;
-    }
+    cache_path.push(id_str().add(".thumbnail"));
+    resize_image.save_with_format(&cache_path, ImageFormat::Jpeg)?;
+    metadata.thumbnail = cache_path.to_string_lossy().to_string();
 
     Ok(())
 }

@@ -1,8 +1,6 @@
-use std::io::Cursor;
 use std::ops::Add;
 use std::path::{Path, PathBuf};
 
-use base64::{Engine as _, engine::general_purpose};
 use image::{DynamicImage, GenericImageView, ImageFormat, RgbImage};
 use kmeans_colors::{Calculate, CentroidData, get_kmeans_hamerly, Sort};
 use palette::{FromColor, IntoColor, Srgb};
@@ -89,20 +87,6 @@ pub fn thumbnail(image: &DynamicImage, w: u32, h: u32) -> RgbImage {
     let w1 = 200;
     let h1 = (200f32 / w as f32 * h as f32) as u32;
     image.thumbnail(w1, h1).to_rgb8()
-}
-
-/// 生成base64图片
-pub fn image_to_base64(image: &RgbImage) -> Option<String> {
-    let mut buffer = Vec::new();
-    image
-        .write_to(&mut Cursor::new(&mut buffer), ImageFormat::Jpeg)
-        .print_error();
-    if !buffer.is_empty() {
-        let base64 = general_purpose::STANDARD.encode(&buffer);
-        Some(format!("data:image/jpg;base64,{}", base64))
-    } else {
-        None
-    }
 }
 
 /// 提取主题色

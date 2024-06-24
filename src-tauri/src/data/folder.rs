@@ -84,7 +84,7 @@ impl Folder {
         }
     }
 
-    pub async fn get_by_path(session: &Session, path: String) -> Option<Self> {
+    pub async fn get_by_path(session: &Session, path: &str) -> Option<Self> {
         if let Ok(result) = session
             .count(
                 format!(

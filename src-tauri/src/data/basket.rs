@@ -37,69 +37,63 @@ impl Basket {
     }
 
     pub async fn exist(&self, session: &Session) -> bool {
-        if let Ok(result) = session
+        match session
             .count(
                 format!(
                     "SELECT COUNT(*) AS count FROM basket WHERE name = '{}'",
                     &self.name
                 )
-                    .as_str(),
+                .as_str(),
             )
             .await
         {
-            return result.count > 0;
-        }
-        false
-    }
-
-    pub async fn save(&self, session: &Session) {
-        if let Some(pool) = session.as_pool().print_error() {
-            query("INSERT INTO basket (id, name) VALUES (?, ?)")
-                .bind(&self.id)
-                .bind(&self.name)
-                .execute(pool)
-                .await
-                .print_error();
+            Ok(result) => result.count > 0,
+            Err(_) => false,
         }
     }
 
-    pub async fn save_folder(&self, directories: &Vec<String>, session: &Session) {
-        if let Some(basket) = session
+    pub async fn save(&self, session: &Session) -> Option<()> {
+        let pool = session.as_pool().print_error()?;
+        query("INSERT INTO basket (id, name) VALUES (?, ?)")
+            .bind(&self.id)
+            .bind(&self.name)
+            .execute(pool)
+            .await
+            .print_error()?;
+        Some(())
+    }
+
+    pub async fn save_folder(&self, directories: &Vec<String>, session: &Session) -> Option<()> {
+        let basket = session
             .select_one_as::<Basket>(&format!(
                 "SELECT * FROM basket WHERE name = '{}'",
                 self.name
             ))
             .await
-            .print_error()
-        {
-            let str = directories
-                .iter()
-                .map(|v| format!("'{v}'"))
-                .collect::<Vec<String>>()
-                .join(",");
-            if let Some(folders) = session
-                .select_as::<Folder>(&format!("SELECT * FROM folder WHERE path IN ({str})"))
-                .await
-                .print_error()
-            {
-                if let Some(pool) = session.as_pool().print_error() {
-                    for folder in folders {
-                        let basket_folder = BasketFolder::new(basket.id, folder.id);
-                        if !basket_folder.exist(&session).await {
-                            query(
-                                "INSERT INTO basket_folder (id, basket_id, folder_id) VALUES (?, ?, ?)",
-                            )
-                                .bind(&basket_folder.id)
-                                .bind(&basket_folder.basket_id)
-                                .bind(&basket_folder.folder_id)
-                                .execute(pool)
-                                .await
-                                .print_error();
-                        }
-                    }
-                }
+            .print_error()?;
+        let str = directories
+            .iter()
+            .map(|v| format!("'{v}'"))
+            .collect::<Vec<String>>()
+            .join(",");
+        let folders = session
+            .select_as::<Folder>(&format!("SELECT * FROM folder WHERE path IN ({str})"))
+            .await
+            .print_error()?;
+        let pool = session.as_pool().print_error()?;
+        for folder in folders {
+            let basket_folder = BasketFolder::new(basket.id, folder.id);
+            if !basket_folder.exist(&session).await {
+                query("INSERT INTO basket_folder (id, basket_id, folder_id) VALUES (?, ?, ?)")
+                    .bind(&basket_folder.id)
+                    .bind(&basket_folder.basket_id)
+                    .bind(&basket_folder.folder_id)
+                    .execute(pool)
+                    .await
+                    .print_error();
             }
         }
+        Some(())
     }
 }
 
@@ -113,7 +107,7 @@ impl BasketFolder {
     }
 
     pub async fn exist(&self, session: &Session) -> bool {
-        if let Ok(result) = session
+        match session
             .count(
                 format!(
                     "SELECT COUNT(*) AS count FROM basket_folder WHERE basket_id = {} AND folder_id = {}",
@@ -121,11 +115,10 @@ impl BasketFolder {
                 )
                     .as_str(),
             )
-            .await
-        {
-            return result.count > 0;
+            .await { 
+            Ok(result) => result.count > 0,
+            Err(_) => false,
         }
-        false
     }
 }
 

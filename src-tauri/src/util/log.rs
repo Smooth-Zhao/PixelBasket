@@ -5,7 +5,7 @@ macro_rules! debug {
             use chrono::{DateTime, Local};
             let now: DateTime<Local> = Local::now();
             println!(
-                "{} [{}] {}",
+                "{} [{}] |{}| {}",
                 now.format("%Y-%m-%d %H:%M:%S"),
                 "DEBUG",
                 &format!($($arg)*)
